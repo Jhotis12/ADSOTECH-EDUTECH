@@ -12,12 +12,13 @@ const isValidUrl = (url: string) => {
   }
 };
 
-const isConfigured = projectUrl && anonKey && isValidUrl(projectUrl) && projectUrl !== 'https://pkygbdtvtdhytkhficyd.supabase.co';
+export const isConfigured = projectUrl && anonKey && isValidUrl(projectUrl);
 
-export const supabase = isConfigured
-  ? createClient(projectUrl, anonKey)
-  : createClient('https://placeholder.supabase.co', 'placeholder');
+export const supabase = createClient(
+  projectUrl || 'https://placeholder.supabase.co',
+  anonKey || 'placeholder'
+);
 
 if (!isConfigured) {
-  console.warn('Supabase not configured. Using placeholder client.');
+  console.warn('Supabase not configured. Please check your .env file.');
 }

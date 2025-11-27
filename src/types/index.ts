@@ -1,5 +1,5 @@
 export interface Institucion {
-    idInstitucion: number;
+    idinstitucion: number;
     nombre: string;
     direccion: string;
     telefono: string;
@@ -11,71 +11,71 @@ export interface Institucion {
 }
 
 export interface Rol {
-    idRol: number;
+    idrol: number;
     nombre: string;
 }
 
 export interface Usuario {
-    idUsuario: number;
-    idInstitucion: number | null;
-    idRol: number;
-    auth_user_id: string | null;
+    idusuario: number;
+    idinstitucion: number | null;
+    idrol: number;
     nombre: string;
     apellido: string;
-    urlFotoPerfil: string | null;
+    urlfotoperfil: string | null;
     correo: string;
     telefono: string;
     genero: string;
-    fechaRegistro: string;
+    fecharegistro: string;
+    contrasena_hash: string;
     activo: boolean;
 }
 
 export interface PreguntaFrecuente {
-    idPregunta: number;
+    idpregunta: number;
     categoria: string;
     pregunta: string;
     respuesta: string;
 }
 
 export interface Recurso {
-    idRecurso: number;
-    idGrado: number | null;
-    idAsignatura: number | null;
+    idrecurso: number;
+    idgrado: number | null;
+    idasignatura: number | null;
     titulo: string;
     tipo: string;
     url: string;
 }
 
 export interface Tramite {
-    idTramite: number;
+    idtramite: number;
     nombre: string;
     descripcion: string;
 }
 
 export interface SolicitudTramite {
-    idSolicitud: number;
-    idUsuario: number;
-    idTramite: number;
+    idsolicitud: number;
+    idusuario: number;
+    idtramite: number;
     fecha: string;
     estado: string;
     observacion: string | null;
 }
 
 export interface Comunicado {
-    idComunicado: number;
-    idInstitucion: number;
+    idcomunicado: number;
+    idinstitucion: number;
     titulo: string;
     mensaje: string;
     fecha: string;
-    dirigidoA: string;
+    dirigidoa: string;
 }
 
 export interface Evento {
-    idEvento: number;
-    idInstitucion: number;
+    idevento: number;
+    idinstitucion: number;
     titulo: string;
     descripcion: string;
-    fechaInicio: string;
-    fechaFin: string;
+    fechainicio: string;
+    fechafin: string;
     tipo: string;
 }

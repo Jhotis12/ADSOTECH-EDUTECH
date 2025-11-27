@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Lock, Mail, ArrowRight, Loader2 } from 'lucide-react';
 
@@ -8,6 +8,7 @@ const Login = () => {
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const { login } = useAuth();
     const navigate = useNavigate();
 
     const handleLogin = async (e: React.FormEvent) => {
@@ -16,12 +17,9 @@ const Login = () => {
         setError(null);
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
-                email,
-                password,
-            });
+            const { error } = await login(email, password);
 
-            if (error) throw error;
+            if (error) throw new Error(error);
             navigate('/');
         } catch (err: any) {
             setError(err.message);

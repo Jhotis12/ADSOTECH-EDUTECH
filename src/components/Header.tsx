@@ -1,12 +1,15 @@
 
 import { Bell, Search, User, LogIn } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
     isAuthenticated: boolean;
 }
 
 const Header = ({ isAuthenticated }: HeaderProps) => {
+    const { user } = useAuth();
+
     return (
         <header className={`h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 fixed top-0 right-0 left-0 ${isAuthenticated ? 'md:left-64' : 'left-0'} z-10 px-6 flex items-center justify-between transition-all duration-300`}>
             <div className="flex items-center gap-4 w-full max-w-md">
@@ -30,11 +33,19 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
 
                         <div className="flex items-center gap-3 pl-4 border-l border-gray-200">
                             <div className="text-right hidden sm:block">
-                                <p className="text-sm font-medium text-gray-900">Usuario Demo</p>
-                                <p className="text-xs text-gray-500">Estudiante</p>
+                                <p className="text-sm font-medium text-gray-900">
+                                    {user ? `${user.nombre} ${user.apellido}` : 'Usuario'}
+                                </p>
+                                <p className="text-xs text-gray-500">
+                                    {user?.idrol === 1 ? 'Administrador' : user?.idrol === 2 ? 'Docente' : 'Estudiante'}
+                                </p>
                             </div>
-                            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600">
-                                <User size={20} />
+                            <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 overflow-hidden">
+                                {user?.urlfotoperfil ? (
+                                    <img src={user.urlfotoperfil} alt="Perfil" className="w-full h-full object-cover" />
+                                ) : (
+                                    <User size={20} />
+                                )}
                             </div>
                         </div>
                     </>

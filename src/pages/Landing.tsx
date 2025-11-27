@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Clock, MapPin, Phone, Calendar, Award, TrendingUp, Users } from 'lucide-react';
+import { Clock, MapPin, Phone, ArrowRight } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { Institucion } from '../types';
+import type { Institucion } from '../types';
+import { Link } from 'react-router-dom';
 
-const Dashboard = () => {
+const Landing = () => {
     const [institution, setInstitution] = useState<Institucion | null>(null);
     const [loading, setLoading] = useState(true);
 
@@ -11,7 +12,7 @@ const Dashboard = () => {
         const fetchInstitution = async () => {
             try {
                 const { data, error } = await supabase
-                    .from('Institucion')
+                    .from('institucion')
                     .select('*')
                     .single();
 
@@ -43,9 +44,13 @@ const Dashboard = () => {
                     <h1 className="text-3xl font-bold mb-2">
                         Bienvenido a {institution?.nombre || 'EduTech'}
                     </h1>
-                    <p className="text-indigo-100 max-w-xl">
-                        Plataforma integral de gestión educativa. Accede a tus trámites, recursos y análisis en un solo lugar.
+                    <p className="text-indigo-100 max-w-xl mb-6">
+                        Plataforma integral de gestión educativa. Mantente informado sobre las últimas novedades y accede a la información institucional.
                     </p>
+                    <Link to="/login" className="inline-flex items-center gap-2 bg-white text-indigo-600 px-4 py-2 rounded-xl font-medium hover:bg-indigo-50 transition-colors">
+                        Iniciar Sesión
+                        <ArrowRight size={18} />
+                    </Link>
                 </div>
                 <div className="absolute right-0 top-0 h-full w-1/2 bg-white/10 transform skew-x-12 translate-x-20"></div>
                 <div className="absolute right-0 bottom-0 h-64 w-64 bg-white/10 rounded-full transform translate-x-10 translate-y-10 blur-3xl"></div>
@@ -101,58 +106,29 @@ const Dashboard = () => {
                 </div>
             </div>
 
-            {/* Quick Stats / Analysis Preview */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-bold text-gray-900">Resumen Académico</h2>
-                        <button className="text-indigo-600 text-sm font-medium hover:text-indigo-700">Ver todo</button>
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm text-orange-500">
-                                    <Award size={20} />
-                                </div>
-                                <span className="font-medium text-gray-700">Promedio General</span>
-                            </div>
-                            <span className="text-lg font-bold text-gray-900">4.5</span>
-                        </div>
-                        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-                            <div className="flex items-center gap-3">
-                                <div className="p-2 bg-white rounded-lg shadow-sm text-blue-500">
-                                    <Calendar size={20} />
-                                </div>
-                                <span className="font-medium text-gray-700">Asistencia</span>
-                            </div>
-                            <span className="text-lg font-bold text-gray-900">98%</span>
-                        </div>
-                    </div>
+            {/* Recent News (Forum) */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-bold text-gray-900">Novedades y Anuncios</h2>
+                    <button className="text-indigo-600 text-sm font-medium hover:text-indigo-700">Ver todo</button>
                 </div>
-
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                    <div className="flex items-center justify-between mb-6">
-                        <h2 className="text-lg font-bold text-gray-900">Novedades Recientes</h2>
-                        <button className="text-indigo-600 text-sm font-medium hover:text-indigo-700">Ver todo</button>
-                    </div>
-                    <div className="space-y-4">
-                        {[1, 2].map((i) => (
-                            <div key={i} className="flex gap-4 p-3 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer">
-                                <div className="w-12 h-12 bg-indigo-100 rounded-lg flex-shrink-0 flex items-center justify-center text-indigo-600 font-bold">
-                                    2{i}
-                                </div>
-                                <div>
-                                    <h4 className="font-medium text-gray-900">Reunión de Padres de Familia</h4>
-                                    <p className="text-sm text-gray-500 line-clamp-1">Se convoca a reunión para entrega de informes...</p>
-                                    <span className="text-xs text-indigo-600 mt-1 block">Hace 2 horas</span>
-                                </div>
+                <div className="space-y-4">
+                    {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex gap-4 p-4 hover:bg-gray-50 rounded-xl transition-colors cursor-pointer border border-gray-50">
+                            <div className="w-12 h-12 bg-indigo-100 rounded-lg flex-shrink-0 flex items-center justify-center text-indigo-600 font-bold">
+                                2{i}
                             </div>
-                        ))}
-                    </div>
+                            <div>
+                                <h4 className="font-medium text-gray-900">Reunión de Padres de Familia</h4>
+                                <p className="text-sm text-gray-500 mt-1">Se convoca a reunión para entrega de informes académicos del segundo periodo. Su asistencia es fundamental.</p>
+                                <span className="text-xs text-indigo-600 mt-2 block">Hace {i * 2} horas</span>
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </div>
     );
 };
 
-export default Dashboard;
+export default Landing;

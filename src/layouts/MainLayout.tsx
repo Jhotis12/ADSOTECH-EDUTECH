@@ -1,26 +1,27 @@
-import { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, Navigate, useLocation } from 'react-router-dom';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import ChatBot from '../components/ChatBot';
-import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 
 const MainLayout = () => {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const location = useLocation();
+    const { user, loading } = useAuth();
+    const isAuthenticated = !!user;
 
-    useEffect(() => {
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setIsAuthenticated(!!session);
-        });
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600"></div>
+            </div>
+        );
+    }
 
-        const {
-            data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
-            setIsAuthenticated(!!session);
-        });
-
-        return () => subscription.unsubscribe();
-    }, []);
+    // Allow public access to landing page ('/')
+    // For all other routes, require authentication
+    if (!isAuthenticated && location.pathname !== '/') {
+        return <Navigate to="/login" replace />;
+    }
 
     return (
         <div className="min-h-screen bg-gray-50">
