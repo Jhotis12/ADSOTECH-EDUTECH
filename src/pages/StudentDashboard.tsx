@@ -176,6 +176,89 @@ const StudentDashboard = () => {
                                 ? Math.round((totalPresentes / totalAsistencias) * 100)
                                 : 0;
 
+                            // Fetch matricula to get group
+                            const { data: matriculaData } = await supabase
+                                .from('matricula')
+                                .select('idmatricula, idgrupo')
+                                .eq('idestudiante', childId)
+                                .order('anio', { ascending: false })
+                                .limit(1)
+                                .single();
+
+                            let tasks: any[] = [];
+                            let taskStats = {
+                                totalTareas: 0,
+                                tareasEntregadas: 0,
+                                tareasPendientes: 0,
+                                tareasAtrasadas: 0,
+                                tareasCalificadas: 0
+                            };
+
+                            if (matriculaData) {
+                                // Fetch tasks for the group
+                                const { data: tasksData } = await supabase
+                                    .from('tarea')
+                                    .select(`
+                                        *,
+                                        docenteasignaturagrupo!inner (
+                                            idgrupo,
+                                            asignatura:idasignatura (
+                                                nombre
+                                            )
+                                        )
+                                    `)
+                                    .eq('docenteasignaturagrupo.idgrupo', matriculaData.idgrupo);
+
+                                if (tasksData && tasksData.length > 0) {
+                                    // Fetch submissions for these tasks
+                                    const { data: submissionsData } = await supabase
+                                        .from('entregatarea')
+                                        .select('*')
+                                        .in('idtarea', tasksData.map(t => t.idtarea))
+                                        .eq('idmatricula', matriculaData.idmatricula);
+
+                                    const submissionsMap = new Map(submissionsData?.map(s => [s.idtarea, s]) || []);
+
+                                    tasks = tasksData.map((t: any) => {
+                                        const submission = submissionsMap.get(t.idtarea);
+                                        let estado = 'pendiente';
+                                        let fechaentregado = undefined;
+                                        let nota = undefined;
+
+                                        if (submission) {
+                                            estado = submission.estado || 'entregada';
+                                            fechaentregado = submission.fechaentrega;
+                                            nota = submission.nota;
+                                        } else {
+                                            const today = new Date();
+                                            const dueDate = new Date(t.fechaentrega);
+                                            if (today > dueDate) {
+                                                estado = 'atrasada';
+                                            }
+                                        }
+
+                                        return {
+                                            titulo: t.titulo,
+                                            descripcion: t.descripcion,
+                                            asignatura: t.docenteasignaturagrupo?.asignatura?.nombre || 'N/A',
+                                            fechaasignacion: t.fechaasignacion,
+                                            fechaentrega: t.fechaentrega,
+                                            tipo: t.tipo,
+                                            estado,
+                                            fechaentregado,
+                                            nota
+                                        };
+                                    });
+
+                                    // Calculate stats
+                                    taskStats.totalTareas = tasks.length;
+                                    taskStats.tareasEntregadas = tasks.filter(t => t.estado === 'entregada' || t.estado === 'calificada').length;
+                                    taskStats.tareasPendientes = tasks.filter(t => t.estado === 'pendiente').length;
+                                    taskStats.tareasAtrasadas = tasks.filter(t => t.estado === 'atrasada').length;
+                                    taskStats.tareasCalificadas = tasks.filter(t => t.estado === 'calificada').length;
+                                }
+                            }
+
                             return {
                                 nombre: item.usuario?.nombre || '',
                                 apellido: item.usuario?.apellido || '',
@@ -189,7 +272,9 @@ const StudentDashboard = () => {
                                     porcentajeAsistencia,
                                     totalInasistencias,
                                     totalEvaluaciones
-                                }
+                                },
+                                tasks,
+                                taskStats
                             };
                         })
                     );
@@ -261,6 +346,89 @@ const StudentDashboard = () => {
                     ? Math.round((totalPresentes / totalAsistencias) * 100)
                     : 0;
 
+                // Fetch matricula to get group
+                const { data: matriculaData } = await supabase
+                    .from('matricula')
+                    .select('idmatricula, idgrupo')
+                    .eq('idestudiante', childId)
+                    .order('anio', { ascending: false })
+                    .limit(1)
+                    .single();
+
+                let tasks: any[] = [];
+                let taskStats = {
+                    totalTareas: 0,
+                    tareasEntregadas: 0,
+                    tareasPendientes: 0,
+                    tareasAtrasadas: 0,
+                    tareasCalificadas: 0
+                };
+
+                if (matriculaData) {
+                    // Fetch tasks for the group
+                    const { data: tasksData } = await supabase
+                        .from('tarea')
+                        .select(`
+                            *,
+                            docenteasignaturagrupo!inner (
+                                idgrupo,
+                                asignatura:idasignatura (
+                                    nombre
+                                )
+                            )
+                        `)
+                        .eq('docenteasignaturagrupo.idgrupo', matriculaData.idgrupo);
+
+                    if (tasksData && tasksData.length > 0) {
+                        // Fetch submissions for these tasks
+                        const { data: submissionsData } = await supabase
+                            .from('entregatarea')
+                            .select('*')
+                            .in('idtarea', tasksData.map(t => t.idtarea))
+                            .eq('idmatricula', matriculaData.idmatricula);
+
+                        const submissionsMap = new Map(submissionsData?.map(s => [s.idtarea, s]) || []);
+
+                        tasks = tasksData.map((t: any) => {
+                            const submission = submissionsMap.get(t.idtarea);
+                            let estado = 'pendiente';
+                            let fechaentregado = undefined;
+                            let nota = undefined;
+
+                            if (submission) {
+                                estado = submission.estado || 'entregada';
+                                fechaentregado = submission.fechaentrega;
+                                nota = submission.nota;
+                            } else {
+                                const today = new Date();
+                                const dueDate = new Date(t.fechaentrega);
+                                if (today > dueDate) {
+                                    estado = 'atrasada';
+                                }
+                            }
+
+                            return {
+                                titulo: t.titulo,
+                                descripcion: t.descripcion,
+                                asignatura: t.docenteasignaturagrupo?.asignatura?.nombre || 'N/A',
+                                fechaasignacion: t.fechaasignacion,
+                                fechaentrega: t.fechaentrega,
+                                tipo: t.tipo,
+                                estado,
+                                fechaentregado,
+                                nota
+                            };
+                        });
+
+                        // Calculate stats
+                        taskStats.totalTareas = tasks.length;
+                        taskStats.tareasEntregadas = tasks.filter(t => t.estado === 'entregada' || t.estado === 'calificada').length;
+                        taskStats.tareasPendientes = tasks.filter(t => t.estado === 'pendiente').length;
+                        taskStats.tareasAtrasadas = tasks.filter(t => t.estado === 'atrasada').length;
+                        taskStats.tareasCalificadas = tasks.filter(t => t.estado === 'calificada').length;
+                    }
+                }
+
                 const studentData = {
                     nombre: user.nombre,
                     apellido: user.apellido,
@@ -274,7 +442,9 @@ const StudentDashboard = () => {
                         porcentajeAsistencia,
                         totalInasistencias,
                         totalEvaluaciones
-                    }
+                    },
+                    tasks,
+                    taskStats
                 };
 
                 setChildren([studentData]);
