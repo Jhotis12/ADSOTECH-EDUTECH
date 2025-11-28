@@ -94,15 +94,23 @@ export const getGeminiResponseWithContext = async (
             return roles[rol] || 'Usuario';
         };
 
-        let contextPrompt = `Eres el asistente virtual de EduTech, una plataforma educativa. Estás hablando con:
+        let contextPrompt = `
+Eres un asistente virtual útil y amable para la plataforma educativa EduTech.
+${userContext.user.rol === '4'
+                ? "Estás hablando directamente con el ESTUDIANTE. Responde usando 'tú', 'tus notas', 'tu promedio'. NO hables de 'hijos'."
+                : "Estás hablando con un PADRE/ACUDIENTE. Responde refiriéndote a 'su hijo', 'sus notas', 'el estudiante'."}
 
+Información del Usuario:
 Nombre: ${userContext.user.nombre} ${userContext.user.apellido}
 Rol: ${getRoleName(userContext.user.rol)}
 Correo: ${userContext.user.correo}
 `;
 
         if (userContext.children && userContext.children.length > 0) {
-            contextPrompt += `\nHijos/Estudiantes a cargo:\n`;
+            contextPrompt += userContext.user.rol === '4'
+                ? `\nTu Información Académica (Estudiante):\n`
+                : `\nHijos/Estudiantes a cargo:\n`;
+
             userContext.children.forEach((child, index) => {
                 contextPrompt += `\n${index + 1}. ${child.nombre} ${child.apellido} (${child.correo})\n`;
 
@@ -160,7 +168,23 @@ Correo: ${userContext.user.correo}
 - NO des explicaciones extra
 - Sé directo y preciso
 - Usa un tono profesional pero amigable
-- Si te preguntan por un dato específico, da solo ese dato
+
+SI EL USUARIO PIDE UN CERTIFICADO O REPORTE:
+1. Identifica qué tipo de documento quiere:
+   - "CERTIFICADO_ESTUDIO" (Certificado formal)
+   - "CONSTANCIA_ESTUDIO" (Constancia simple)
+   - "REPORTE_ASISTENCIA" (Reporte de fallas/asistencia)
+   - "REPORTE_CALIFICACIONES" (Reporte de notas/calificaciones)
+2. Identifica para qué estudiante es:
+   - Si el usuario tiene UN SOLO hijo/estudiante a cargo (o es el estudiante mismo), ASUME que es para él.
+   - Si tiene VARIOS hijos y no especificó el nombre, PREGUNTA "¿Para cuál de tus hijos necesitas el certificado?".
+3. Si ya sabes el estudiante y el tipo:
+   - PRIMERO: Genera una respuesta verbal confirmando la acción (ej: "Claro, estoy generando tu reporte...").
+   - SEGUNDO: Incluye el marcador de acción AL FINAL.
+   
+   Formato: "Mensaje verbal. <<<ACTION:{"type":"TIPO_DOCUMENTO", "studentName":"NOMBRE_ESTUDIANTE"}>>>"
+
+Ejemplo: "Claro, aquí tienes el reporte de Juan. <<<ACTION:{"type":"REPORTE_CALIFICACIONES", "studentName":"Juan Pérez"}>>>"
 
 Usuario pregunta: ${prompt}`;
 
@@ -170,9 +194,28 @@ Usuario pregunta: ${prompt}`;
             model: modelName
         });
 
-        const result = await model.generateContent(contextPrompt);
-        const response = await result.response;
-        return response.text();
+        // Retry logic for 429 errors
+        let retries = 3;
+        let delay = 2000; // Start with 2 seconds
+
+        while (retries > 0) {
+            try {
+                const result = await model.generateContent(contextPrompt);
+                const response = await result.response;
+                return response.text();
+            } catch (error: any) {
+                if (error.message?.includes('429') || error.status === 429 || error.toString().includes('429')) {
+                    retries--;
+                    if (retries === 0) throw error;
+                    console.warn(`Rate limit hit. Retrying in ${delay}ms...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    delay *= 2; // Exponential backoff
+                } else {
+                    throw error;
+                }
+            }
+        }
+        return "Lo siento, el servicio está saturado en este momento. Por favor intenta de nuevo en unos segundos.";
     } catch (error) {
         console.error("Error fetching Gemini response with context:", error);
         return "Lo siento, tuve un problema al procesar tu solicitud. Intenta de nuevo más tarde.";

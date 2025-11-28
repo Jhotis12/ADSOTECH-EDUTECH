@@ -4,6 +4,7 @@ import { getGeminiResponseWithContext, type UserContext } from '../lib/gemini';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
+import { generateStudyCertificate, generateStudyProof, generateAttendanceReport, generateGradesReport } from '../lib/pdfGenerator';
 
 
 interface Child {
@@ -157,6 +158,86 @@ const StudentDashboard = () => {
 
                     setChildren(childrenWithData);
                 }
+            } else if (user?.idrol === 4) {
+                // Fetch data for student user
+                const childId = user.idusuario;
+
+                // Fetch grades
+                const { data: gradesData } = await supabase
+                    .from('nota')
+                    .select(`
+                        nota,
+                        evaluacion:idevaluacion (
+                            titulo,
+                            tipo,
+                            fecha,
+                            docenteasignaturagrupo:iddag (
+                                asignatura:idasignatura (
+                                    nombre
+                                )
+                            )
+                        ),
+                        matricula:idmatricula (
+                            idestudiante
+                        )
+                    `)
+                    .eq('matricula.idestudiante', childId);
+
+                // Fetch attendance
+                const { data: attendanceData } = await supabase
+                    .from('asistencia')
+                    .select(`
+                        fecha,
+                        estado,
+                        matricula:idmatricula (
+                            idestudiante
+                        )
+                    `)
+                    .eq('matricula.idestudiante', childId)
+                    .order('fecha', { ascending: false });
+
+                // Format grades
+                const grades = gradesData?.map((g: any) => ({
+                    asignatura: g.evaluacion?.docenteasignaturagrupo?.asignatura?.nombre || 'N/A',
+                    nota: g.nota,
+                    tipo: g.evaluacion?.tipo || 'N/A',
+                    fecha: g.evaluacion?.fecha || new Date().toISOString()
+                })) || [];
+
+                // Format attendance
+                const attendance = attendanceData?.map((a: any) => ({
+                    fecha: a.fecha,
+                    estado: a.estado
+                })) || [];
+
+                // Calculate statistics
+                const totalEvaluaciones = grades.length;
+                const promedioGeneral = totalEvaluaciones > 0
+                    ? grades.reduce((sum, g) => sum + g.nota, 0) / totalEvaluaciones
+                    : 0;
+
+                const totalAsistencias = attendance.length;
+                const totalPresentes = attendance.filter(a => a.estado === 'Presente').length;
+                const totalInasistencias = attendance.filter(a => a.estado === 'Ausente').length;
+                const porcentajeAsistencia = totalAsistencias > 0
+                    ? Math.round((totalPresentes / totalAsistencias) * 100)
+                    : 0;
+
+                const studentData = {
+                    nombre: user.nombre,
+                    apellido: user.apellido,
+                    correo: user.correo,
+                    grades,
+                    attendance,
+                    stats: {
+                        promedioGeneral,
+                        porcentajeAsistencia,
+                        totalInasistencias,
+                        totalEvaluaciones
+                    }
+                };
+
+                setChildren([studentData]);
             }
             setChildrenLoaded(true);
         } catch (error) {
@@ -261,6 +342,8 @@ const StudentDashboard = () => {
         }
     };
 
+
+
     const handleSend = async (textToSend?: string) => {
         const messageText = textToSend || input;
         if (!messageText.trim() || !user) return;
@@ -292,13 +375,58 @@ const StudentDashboard = () => {
             };
 
             const response = await getGeminiResponseWithContext(messageText, userContext);
+
+            // Check for action marker
+            // Check for action marker
+            const actionMatch = response.match(/<<<ACTION:([\s\S]*?)>>>/);
+            let displayResponse = response;
+
+            if (actionMatch) {
+                try {
+                    const action = JSON.parse(actionMatch[1]);
+                    displayResponse = response.replace(actionMatch[0], ''); // Remove marker from display
+
+                    // Find student
+                    const studentName = action.studentName;
+                    let student = children.find(c =>
+                        `${c.nombre} ${c.apellido}`.toLowerCase().includes(studentName.toLowerCase()) ||
+                        studentName.toLowerCase().includes(c.nombre.toLowerCase())
+                    );
+
+                    // Fallback: If only one child exists, use it
+                    if (!student && children.length === 1) {
+                        student = children[0];
+                    }
+
+                    if (student && institution) {
+                        // Generate PDF based on type
+                        switch (action.type) {
+                            case 'CERTIFICADO_ESTUDIO':
+                                generateStudyCertificate(student, institution);
+                                break;
+                            case 'CONSTANCIA_ESTUDIO':
+                                generateStudyProof(student, institution);
+                                break;
+                            case 'REPORTE_ASISTENCIA':
+                                generateAttendanceReport(student, institution, student.attendance || []);
+                                break;
+                            case 'REPORTE_CALIFICACIONES':
+                                generateGradesReport(student, institution, student.grades || []);
+                                break;
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error parsing action:', e);
+                }
+            }
+
             setMessages(prev => [...prev, {
-                text: response,
+                text: displayResponse,
                 isUser: false
             }]);
 
             // Save interaction to database
-            await saveInteraction(messageText, response);
+            await saveInteraction(messageText, displayResponse);
         } catch (error) {
             const errorMessage = "Lo siento, hubo un error al conectar con el asistente.";
             setMessages(prev => [...prev, {
