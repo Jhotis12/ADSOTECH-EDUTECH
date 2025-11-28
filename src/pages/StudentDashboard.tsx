@@ -148,6 +148,7 @@ const StudentDashboard = () => {
                                         titulo,
                                         tipo,
                                         fecha,
+                                        periodo,
                                         docenteasignaturagrupo:iddag (
                                             asignatura:idasignatura (
                                                 nombre
@@ -315,6 +316,19 @@ const StudentDashboard = () => {
                 const { data: gradesData } = await supabase
                     .from('nota')
                     .select(`
+                        nota,
+                        evaluacion:idevaluacion (
+                            titulo,
+                            tipo,
+                            fecha,
+                            periodo,
+                            docenteasignaturagrupo:iddag (
+                                asignatura:idasignatura (
+                                    nombre
+                                )
+                            )
+                        ),
+                        matricula:idmatricula (
                             idestudiante
                         )
                     `)

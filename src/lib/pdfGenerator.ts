@@ -259,7 +259,7 @@ export const generateAttendanceReport = (student: Student, institution: Institut
     doc.save(`Reporte_Asistencia_${student.nombre}_${student.apellido}.pdf`);
 };
 
-export const generateGradesReport = (student: Student, institution: Institution, grades: any[]) => {
+export const generateGradesReport = (student: Student, institution: Institution, grades: any[], period?: number, subject?: string) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
@@ -275,8 +275,17 @@ export const generateGradesReport = (student: Student, institution: Institution,
     doc.text(`Estudiante: ${student.nombre} ${student.apellido}`, 20, 75);
     doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-CO')}`, 20, 82);
 
+    // Filter grades by period and subject if specified
+    let filteredGrades = grades;
+    if (period) {
+        filteredGrades = filteredGrades.filter(g => g.periodo === period);
+    }
+    if (subject) {
+        filteredGrades = filteredGrades.filter(g => g.asignatura && g.asignatura.toLowerCase().includes(subject.toLowerCase()));
+    }
+
     // Validate grades array
-    if (!grades || !Array.isArray(grades) || grades.length === 0) {
+    if (!filteredGrades || !Array.isArray(filteredGrades) || filteredGrades.length === 0) {
         doc.setFontSize(10);
         doc.text('No hay calificaciones registradas.', 20, 100);
         addFooter(doc);
@@ -284,7 +293,7 @@ export const generateGradesReport = (student: Student, institution: Institution,
         return;
     }
 
-    const tableData = grades.map(g => [
+    const tableData = filteredGrades.map(g => [
         g.asignatura,
         g.nota.toFixed(2),
         g.tipo,
@@ -301,9 +310,9 @@ export const generateGradesReport = (student: Student, institution: Institution,
     });
 
     // Summary
-    const totalGrades = grades.length;
+    const totalGrades = filteredGrades.length;
     const average = totalGrades > 0
-        ? grades.reduce((sum, g) => sum + g.nota, 0) / totalGrades
+        ? filteredGrades.reduce((sum, g) => sum + g.nota, 0) / totalGrades
         : 0;
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
