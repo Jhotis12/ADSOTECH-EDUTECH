@@ -44,6 +44,8 @@ const StudentDashboard = () => {
     const [childrenLoaded, setChildrenLoaded] = useState(false);
     const [institution, setInstitution] = useState<any>(null);
     const [teachers, setTeachers] = useState<any[]>([]);
+    const [schedules, setSchedules] = useState<any[]>([]);
+    const [events, setEvents] = useState<any[]>([]);
     const [institutionLoaded, setInstitutionLoaded] = useState(false);
     const [showQuickActions, setShowQuickActions] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -58,7 +60,7 @@ const StudentDashboard = () => {
         scrollToBottom();
     }, [messages, historyLoaded]);
 
-    // Load children data and institution/teachers on mount (NOT history - user must click button)
+    // Load children data and institution/teachers/schedules/events on mount
     useEffect(() => {
         if (user && !childrenLoaded) {
             loadChildrenData();
@@ -67,6 +69,24 @@ const StudentDashboard = () => {
             loadInstitutionAndTeachers();
         }
     }, [user, childrenLoaded, institutionLoaded]);
+
+    // Load schedules and events after children data is loaded (for parents) or immediately (for students)
+    useEffect(() => {
+        if (user && institutionLoaded) {
+            // For students, load immediately
+            if (user.idrol === 4) {
+                loadSchedulesAndEvents();
+            }
+            // For parents, wait until children are loaded
+            else if (user.idrol === 5 && childrenLoaded) {
+                loadSchedulesAndEvents();
+            }
+            // For other roles, load immediately
+            else if (user.idrol !== 5) {
+                loadSchedulesAndEvents();
+            }
+        }
+    }, [user, institutionLoaded, childrenLoaded]);
 
     const loadChildrenData = async () => {
         try {
@@ -314,6 +334,106 @@ const StudentDashboard = () => {
         }
     };
 
+    const loadSchedulesAndEvents = async () => {
+        try {
+            // Determine which group(s) to fetch schedules for
+            let grupoIds: number[] = [];
+
+            if (user?.idrol === 4) {
+                // For students, get their grupo from matricula
+                const { data: matriculaData } = await supabase
+                    .from('matricula')
+                    .select('idgrupo')
+                    .eq('idestudiante', user.idusuario);
+
+                if (matriculaData && matriculaData.length > 0) {
+                    grupoIds = matriculaData.map(m => m.idgrupo);
+                }
+            } else if (user?.idrol === 5 && children.length > 0) {
+                // For parents, get grupos from their children's matriculas
+                const childIds = children.map(c => c.correo); // We'll need to get idusuario
+                // Fetch children's idusuario
+                const { data: childrenData } = await supabase
+                    .from('usuario')
+                    .select('idusuario')
+                    .in('correo', childIds);
+
+                if (childrenData && childrenData.length > 0) {
+                    const childUserIds = childrenData.map(c => c.idusuario);
+                    const { data: matriculaData } = await supabase
+                        .from('matricula')
+                        .select('idgrupo')
+                        .in('idestudiante', childUserIds);
+
+                    if (matriculaData && matriculaData.length > 0) {
+                        grupoIds = [...new Set(matriculaData.map(m => m.idgrupo))];
+                    }
+                }
+            }
+
+            // Fetch schedules for the relevant grupos
+            if (grupoIds.length > 0) {
+                const { data: schedulesData } = await supabase
+                    .from('horario')
+                    .select(`
+                        diasemana,
+                        horainicio,
+                        horafin,
+                        docenteasignaturagrupo:iddag (
+                            asignatura:idasignatura (
+                                nombre
+                            ),
+                            usuario:iddocente (
+                                nombre,
+                                apellido
+                            ),
+                            grupo:idgrupo (
+                                nombre
+                            )
+                        )
+                    `)
+                    .in('docenteasignaturagrupo.idgrupo', grupoIds);
+
+                if (schedulesData) {
+                    const formattedSchedules = schedulesData.map((s: any) => ({
+                        asignatura: s.docenteasignaturagrupo?.asignatura?.nombre || 'N/A',
+                        docente: s.docenteasignaturagrupo?.usuario
+                            ? `${s.docenteasignaturagrupo.usuario.nombre} ${s.docenteasignaturagrupo.usuario.apellido}`
+                            : 'N/A',
+                        diasemana: s.diasemana,
+                        horainicio: s.horainicio,
+                        horafin: s.horafin,
+                        grupo: s.docenteasignaturagrupo?.grupo?.nombre || 'N/A'
+                    }));
+                    setSchedules(formattedSchedules);
+                }
+            }
+
+            // Fetch events for the institution
+            if (user?.idinstitucion) {
+                const { data: eventsData } = await supabase
+                    .from('evento')
+                    .select('*')
+                    .eq('idinstitucion', user.idinstitucion)
+                    .gte('fechafin', new Date().toISOString()) // Only future/ongoing events
+                    .order('fechainicio', { ascending: true });
+
+                if (eventsData) {
+                    const formattedEvents = eventsData.map((e: any) => ({
+                        titulo: e.titulo,
+                        descripcion: e.descripcion,
+                        fechainicio: e.fechainicio,
+                        fechafin: e.fechafin,
+                        tipo: e.tipo
+                    }));
+                    setEvents(formattedEvents);
+                }
+            }
+        } catch (error) {
+            console.error('Error loading schedules and events:', error);
+        }
+    };
+
     const loadConversationHistory = async () => {
         if (historyLoaded) return; // Don't load twice
 
@@ -391,6 +511,8 @@ const StudentDashboard = () => {
                     departamento: institution.departamento
                 } : undefined,
                 teachers: teachers.length > 0 ? teachers : undefined,
+                schedules: schedules.length > 0 ? schedules : undefined,
+                events: events.length > 0 ? events : undefined,
                 children: children.length > 0 ? children : undefined
             };
 

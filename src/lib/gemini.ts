@@ -27,6 +27,21 @@ export interface UserContext {
         correo: string;
         asignaturas: string[];
     }>;
+    schedules?: Array<{
+        asignatura: string;
+        docente: string;
+        diasemana: string;
+        horainicio: string;
+        horafin: string;
+        grupo: string;
+    }>;
+    events?: Array<{
+        titulo: string;
+        descripcion: string;
+        fechainicio: string;
+        fechafin: string;
+        tipo: string;
+    }>;
     children?: Array<{
         nombre: string;
         apellido: string;
@@ -166,6 +181,30 @@ Correo: ${userContext.user.correo}
                 if (teacher.asignaturas && teacher.asignaturas.length > 0) {
                     contextPrompt += `   Asignaturas: ${teacher.asignaturas.join(', ')}\n`;
                 }
+            });
+        }
+
+        // Add schedules information
+        if (userContext.schedules && userContext.schedules.length > 0) {
+            contextPrompt += `\nHorarios de Clases:\n`;
+            userContext.schedules.forEach((schedule, index) => {
+                contextPrompt += `${index + 1}. ${schedule.asignatura} - ${schedule.docente}\n`;
+                contextPrompt += `   Día: ${schedule.diasemana}, Hora: ${schedule.horainicio} - ${schedule.horafin}\n`;
+                contextPrompt += `   Grupo: ${schedule.grupo}\n`;
+            });
+        }
+
+        // Add events information
+        if (userContext.events && userContext.events.length > 0) {
+            contextPrompt += `\nEventos y Reuniones Programadas:\n`;
+            userContext.events.forEach((event, index) => {
+                contextPrompt += `${index + 1}. ${event.titulo} (${event.tipo})\n`;
+                contextPrompt += `   Descripción: ${event.descripcion}\n`;
+                contextPrompt += `   Fecha: ${new Date(event.fechainicio).toLocaleString('es-CO')}`;
+                if (event.fechafin && event.fechafin !== event.fechainicio) {
+                    contextPrompt += ` - ${new Date(event.fechafin).toLocaleString('es-CO')}`;
+                }
+                contextPrompt += `\n`;
             });
         }
 

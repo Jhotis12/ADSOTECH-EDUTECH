@@ -248,3 +248,27 @@ CREATE TABLE estadisticauso (
   valor INT,
   fecha TIMESTAMP DEFAULT NOW()
 );
+-- ============================
+-- tareas
+-- ============================
+create table tarea (
+    idtarea serial primary key,
+    iddag int not null, -- docenteasignaturagrupo
+    titulo varchar(100) not null,
+    descripcion text,
+    fechaasignacion date not null,
+    fechaentrega date not null,
+    tipo varchar(50) -- ej: "trabajo en casa", "proyecto"
+);
+
+-- ============================
+-- entregas de tareas
+-- ============================
+create table entregatarea (
+    identrega serial primary key,
+    idtarea int not null,
+    idmatricula int not null,
+    fechaentrega date,
+    estado varchar(50), -- ej: "pendiente", "entregada", "calificada"
+    nota decimal(3,1) -- opcional, si se califica
+);
