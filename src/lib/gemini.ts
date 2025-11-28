@@ -59,6 +59,7 @@ export interface UserContext {
             nota: number;
             tipo: string;
             fecha: string;
+            periodo?: number;
         }>;
         attendance?: Array<{
             fecha: string;
@@ -80,6 +81,7 @@ export interface UserContext {
             estado: string; // 'pendiente', 'entregada', 'calificada', 'atrasada'
             fechaentregado?: string;
             nota?: number;
+            periodo?: number;
         }>;
         taskStats?: {
             totalTareas: number;
@@ -172,7 +174,7 @@ Correo: ${userContext.user.correo}
                 if (child.grades && child.grades.length > 0) {
                     contextPrompt += `   Calificaciones Recientes:\n`;
                     child.grades.slice(0, 10).forEach(grade => {
-                        contextPrompt += `   - ${grade.asignatura}: ${grade.nota.toFixed(2)} (${grade.tipo}, ${new Date(grade.fecha).toLocaleDateString('es-CO')})\n`;
+                        contextPrompt += `   - ${grade.asignatura}: ${grade.nota.toFixed(2)} (${grade.tipo}, Periodo ${grade.periodo || 'N/A'}, ${new Date(grade.fecha).toLocaleDateString('es-CO')})\n`;
                     });
                 }
 
@@ -204,7 +206,7 @@ Correo: ${userContext.user.correo}
                             task.estado === 'entregada' ? '✓ Entregada' :
                                 task.estado === 'calificada' ? `✓ Calificada (${task.nota})` :
                                     '⏳ Pendiente';
-                        contextPrompt += `   - ${task.asignatura}: ${task.titulo} - ${status}\n`;
+                        contextPrompt += `   - ${task.asignatura}: ${task.titulo} (Periodo ${task.periodo || 'N/A'}) - ${status}\n`;
                         contextPrompt += `     Entrega: ${new Date(task.fechaentrega).toLocaleDateString('es-CO')}\n`;
                         if (task.descripcion) {
                             contextPrompt += `     Descripción: ${task.descripcion}\n`;
@@ -289,10 +291,11 @@ SI EL USUARIO PIDE UN CERTIFICADO O REPORTE:
 3. Si ya sabes el estudiante y el tipo:
    - PRIMERO: Genera una respuesta verbal confirmando la acción (ej: "Claro, estoy generando tu reporte...").
    - SEGUNDO: Incluye el marcador de acción AL FINAL.
-   
-   Formato: "Mensaje verbal. <<<ACTION:{"type":"TIPO_DOCUMENTO", "studentName":"NOMBRE_ESTUDIANTE"}>>>"
+   - TERCERO: Si el usuario especifica un PERIODO (ej: "del primer periodo", "periodo 2"), inclúyelo en el JSON como "period" (número).
 
-Ejemplo: "Claro, aquí tienes el reporte de Juan. <<<ACTION:{"type":"REPORTE_CALIFICACIONES", "studentName":"Juan Pérez"}>>>"
+   Formato: "Mensaje verbal. <<<ACTION:{"type":"TIPO_DOCUMENTO", "studentName":"NOMBRE_ESTUDIANTE", "period": NUMERO_OPCIONAL}>>>"
+
+Ejemplo: "Claro, aquí tienes el reporte de Juan del periodo 1. <<<ACTION:{"type":"REPORTE_CALIFICACIONES", "studentName":"Juan Pérez", "period": 1}>>>"
 
 Usuario pregunta: ${prompt}`;
 

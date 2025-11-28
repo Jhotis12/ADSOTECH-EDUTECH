@@ -24,6 +24,7 @@ interface EducationalAnalysisDashboardProps {
 
 const EducationalAnalysisDashboard: React.FC<EducationalAnalysisDashboardProps> = ({ isOpen, onClose, userContext }) => {
     const [selectedStudentIndex, setSelectedStudentIndex] = React.useState(0);
+    const [selectedPeriod, setSelectedPeriod] = React.useState<number | 'all'>('all');
 
     if (!isOpen) return null;
 
@@ -44,12 +45,28 @@ const EducationalAnalysisDashboard: React.FC<EducationalAnalysisDashboardProps> 
 
     // Prepare Data for Charts
 
-    // 1. Grades Data
-    const gradesData = student.grades?.map(g => ({
-        name: g.asignatura.substring(0, 15) + (g.asignatura.length > 15 ? '...' : ''),
-        nota: g.nota,
-        fullSubject: g.asignatura
-    })) || [];
+    // 1. Grades Data - Group by subject and calculate average
+    const filteredGrades = selectedPeriod === 'all'
+        ? student.grades
+        : student.grades?.filter(g => g.periodo === selectedPeriod);
+
+    // Group grades by subject and calculate average
+    const gradesBySubject = (filteredGrades || []).reduce((acc: any, grade) => {
+        const subject = grade.asignatura;
+        if (!acc[subject]) {
+            acc[subject] = { total: 0, count: 0, subject };
+        }
+        acc[subject].total += grade.nota;
+        acc[subject].count += 1;
+        return acc;
+    }, {});
+
+    const gradesData = Object.values(gradesBySubject).map((item: any) => ({
+        name: item.subject.length > 20 ? item.subject.substring(0, 18) + '...' : item.subject,
+        nota: item.total / item.count,
+        fullSubject: item.subject,
+        count: item.count
+    })).sort((a: any, b: any) => b.nota - a.nota); // Sort by grade descending
 
     // 2. Attendance Data
     const attendanceData = [
@@ -58,11 +75,23 @@ const EducationalAnalysisDashboard: React.FC<EducationalAnalysisDashboardProps> 
     ];
 
     // 3. Tasks Data
+    const filteredTasks = selectedPeriod === 'all'
+        ? student.tasks
+        : student.tasks?.filter(t => t.periodo === selectedPeriod);
+
     const tasksData = [
-        { name: 'Entregadas', value: student.taskStats?.tareasEntregadas || 0 },
-        { name: 'Pendientes', value: student.taskStats?.tareasPendientes || 0 },
-        { name: 'Atrasadas', value: student.taskStats?.tareasAtrasadas || 0 }
+        { name: 'Entregadas', value: filteredTasks?.filter(t => t.estado === 'entregada' || t.estado === 'calificada').length || 0 },
+        { name: 'Pendientes', value: filteredTasks?.filter(t => t.estado === 'pendiente').length || 0 },
+        { name: 'Atrasadas', value: filteredTasks?.filter(t => t.estado === 'atrasada').length || 0 }
     ];
+
+    // Calculate stats based on filtered data
+    const totalEvaluaciones = filteredGrades?.length || 0;
+    const promedioGeneral = totalEvaluaciones > 0
+        ? (filteredGrades || []).reduce((sum, g) => sum + g.nota, 0) / totalEvaluaciones
+        : 0;
+
+    const tareasEntregadas = filteredTasks?.filter(t => t.estado === 'entregada' || t.estado === 'calificada').length || 0;
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 md:p-6 overflow-y-auto">
@@ -94,6 +123,19 @@ const EducationalAnalysisDashboard: React.FC<EducationalAnalysisDashboardProps> 
                                 </p>
                             )}
                         </div>
+                        <div className="ml-4">
+                            <select
+                                value={selectedPeriod}
+                                onChange={(e) => setSelectedPeriod(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+                                className="block w-full pl-3 pr-10 py-1 text-sm border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+                            >
+                                <option value="all">Todos los Periodos</option>
+                                <option value={1}>Periodo 1</option>
+                                <option value={2}>Periodo 2</option>
+                                <option value={3}>Periodo 3</option>
+                                <option value={4}>Periodo 4</option>
+                            </select>
+                        </div>
                     </div>
                     <button
                         onClick={onClose}
@@ -114,7 +156,7 @@ const EducationalAnalysisDashboard: React.FC<EducationalAnalysisDashboardProps> 
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 font-medium uppercase">Promedio General</p>
-                                <p className="text-2xl font-bold text-gray-800">{student.stats?.promedioGeneral.toFixed(1)}</p>
+                                <p className="text-2xl font-bold text-gray-800">{promedioGeneral.toFixed(1)}</p>
                             </div>
                         </div>
                         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
@@ -132,7 +174,7 @@ const EducationalAnalysisDashboard: React.FC<EducationalAnalysisDashboardProps> 
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 font-medium uppercase">Tareas Entregadas</p>
-                                <p className="text-2xl font-bold text-gray-800">{student.taskStats?.tareasEntregadas}</p>
+                                <p className="text-2xl font-bold text-gray-800">{tareasEntregadas}</p>
                             </div>
                         </div>
                         <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
@@ -141,7 +183,7 @@ const EducationalAnalysisDashboard: React.FC<EducationalAnalysisDashboardProps> 
                             </div>
                             <div>
                                 <p className="text-xs text-gray-500 font-medium uppercase">Evaluaciones</p>
-                                <p className="text-2xl font-bold text-gray-800">{student.stats?.totalEvaluaciones}</p>
+                                <p className="text-2xl font-bold text-gray-800">{totalEvaluaciones}</p>
                             </div>
                         </div>
                     </div>
@@ -153,19 +195,40 @@ const EducationalAnalysisDashboard: React.FC<EducationalAnalysisDashboardProps> 
                         <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 lg:col-span-2">
                             <h3 className="text-lg font-semibold text-gray-800 mb-6 flex items-center gap-2">
                                 <Award size={20} className="text-indigo-500" />
-                                Rendimiento por Asignatura
+                                Promedio por Asignatura
                             </h3>
-                            <div className="h-[300px] w-full">
+                            <div className="h-[400px] w-full">
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={gradesData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                                    <BarChart data={gradesData} margin={{ top: 20, right: 30, left: 20, bottom: 80 }}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
-                                        <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} dy={10} />
+                                        <XAxis
+                                            dataKey="name"
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tick={{ fill: '#6B7280', fontSize: 11 }}
+                                            angle={-45}
+                                            textAnchor="end"
+                                            height={80}
+                                        />
                                         <YAxis axisLine={false} tickLine={false} tick={{ fill: '#6B7280', fontSize: 12 }} domain={[0, 5]} />
                                         <Tooltip
                                             cursor={{ fill: '#F3F4F6' }}
                                             contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}
+                                            content={({ active, payload }) => {
+                                                if (active && payload && payload.length) {
+                                                    const data = payload[0].payload;
+                                                    return (
+                                                        <div className="bg-white p-3 rounded-lg shadow-lg border border-gray-200">
+                                                            <p className="font-semibold text-gray-800">{data.fullSubject}</p>
+                                                            <p className="text-indigo-600 font-bold text-lg">{data.nota.toFixed(2)}</p>
+                                                            <p className="text-xs text-gray-500">{data.count} evaluación(es)</p>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            }}
                                         />
-                                        <Bar dataKey="nota" fill="#4F46E5" radius={[6, 6, 0, 0]} barSize={40} />
+                                        <Bar dataKey="nota" fill="#4F46E5" radius={[8, 8, 0, 0]} />
                                     </BarChart>
                                 </ResponsiveContainer>
                             </div>

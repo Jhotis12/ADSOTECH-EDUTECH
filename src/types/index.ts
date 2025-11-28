@@ -96,3 +96,20 @@ export interface Interaccion {
     categoria: string | null;
     fecha: string;
 }
+
+export interface Evaluacion {
+    idevaluacion: number;
+    iddag: number;
+    titulo: string;
+    descripcion: string;
+    fecha: string;
+    tipo: string;
+    periodo: number;
+}
+
+export interface Nota {
+    idnota: number;
+    idevaluacion: number;
+    idmatricula: number;
+    nota: number;
+}

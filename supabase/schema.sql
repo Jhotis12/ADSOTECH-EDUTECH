@@ -152,7 +152,8 @@ CREATE TABLE evaluacion (
   titulo VARCHAR(100),
   descripcion VARCHAR(255),
   fecha DATE,
-  tipo VARCHAR(50)
+  tipo VARCHAR(50),
+  periodo INT -- 1, 2, 3, 4
 );
 
 CREATE TABLE nota (
@@ -258,7 +259,8 @@ CREATE TABLE tarea (
     descripcion TEXT,
     fechaasignacion DATE NOT NULL,
     fechaentrega DATE NOT NULL,
-    tipo VARCHAR(50) -- ej: "trabajo en casa", "proyecto"
+    tipo VARCHAR(50), -- ej: "trabajo en casa", "proyecto"
+    periodo INT -- 1, 2, 3, 4
 );
 
 -- ============================

@@ -19,6 +19,7 @@ interface Child {
         nota: number;
         tipo: string;
         fecha: string;
+        periodo?: number;
     }>;
     attendance?: Array<{
         fecha: string;
@@ -29,6 +30,25 @@ interface Child {
         porcentajeAsistencia: number;
         totalInasistencias: number;
         totalEvaluaciones: number;
+    };
+    tasks?: Array<{
+        titulo: string;
+        descripcion: string;
+        asignatura: string;
+        fechaasignacion: string;
+        fechaentrega: string;
+        tipo: string;
+        estado: string;
+        fechaentregado?: string;
+        nota?: number;
+        periodo?: number;
+    }>;
+    taskStats?: {
+        totalTareas: number;
+        tareasEntregadas: number;
+        tareasPendientes: number;
+        tareasAtrasadas: number;
+        tareasCalificadas: number;
     };
 }
 
@@ -158,7 +178,8 @@ const StudentDashboard = () => {
                                 asignatura: g.evaluacion?.docenteasignaturagrupo?.asignatura?.nombre || 'N/A',
                                 nota: g.nota,
                                 tipo: g.evaluacion?.tipo || 'N/A',
-                                fecha: g.evaluacion?.fecha || new Date().toISOString()
+                                fecha: g.evaluacion?.fecha || new Date().toISOString(),
+                                periodo: g.evaluacion?.periodo
                             })) || [];
 
                             // Format attendance
@@ -250,7 +271,8 @@ const StudentDashboard = () => {
                                             tipo: t.tipo,
                                             estado,
                                             fechaentregado,
-                                            nota
+                                            nota,
+                                            periodo: t.periodo
                                         };
                                     });
 
@@ -293,18 +315,6 @@ const StudentDashboard = () => {
                 const { data: gradesData } = await supabase
                     .from('nota')
                     .select(`
-                        nota,
-                        evaluacion:idevaluacion (
-                            titulo,
-                            tipo,
-                            fecha,
-                            docenteasignaturagrupo:iddag (
-                                asignatura:idasignatura (
-                                    nombre
-                                )
-                            )
-                        ),
-                        matricula:idmatricula (
                             idestudiante
                         )
                     `)
@@ -328,7 +338,8 @@ const StudentDashboard = () => {
                     asignatura: g.evaluacion?.docenteasignaturagrupo?.asignatura?.nombre || 'N/A',
                     nota: g.nota,
                     tipo: g.evaluacion?.tipo || 'N/A',
-                    fecha: g.evaluacion?.fecha || new Date().toISOString()
+                    fecha: g.evaluacion?.fecha || new Date().toISOString(),
+                    periodo: g.evaluacion?.periodo
                 })) || [];
 
                 // Format attendance
@@ -420,7 +431,8 @@ const StudentDashboard = () => {
                                 tipo: t.tipo,
                                 estado,
                                 fechaentregado,
-                                nota
+                                nota,
+                                periodo: t.periodo
                             };
                         });
 
@@ -749,7 +761,7 @@ const StudentDashboard = () => {
                                 generateAttendanceReport(student, institution, student.attendance || []);
                                 break;
                             case 'REPORTE_CALIFICACIONES':
-                                generateGradesReport(student, institution, student.grades || []);
+                                generateGradesReport(student, institution, student.grades || [], action.period);
                                 break;
                         }
                     }
