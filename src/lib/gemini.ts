@@ -64,6 +64,24 @@ export interface UserContext {
             totalInasistencias: number;
             totalEvaluaciones: number;
         };
+        tasks?: Array<{
+            titulo: string;
+            descripcion: string;
+            asignatura: string;
+            fechaasignacion: string;
+            fechaentrega: string;
+            tipo: string;
+            estado: string; // 'pendiente', 'entregada', 'calificada', 'atrasada'
+            fechaentregado?: string;
+            nota?: number;
+        }>;
+        taskStats?: {
+            totalTareas: number;
+            tareasEntregadas: number;
+            tareasPendientes: number;
+            tareasAtrasadas: number;
+            tareasCalificadas: number;
+        };
     }>;
 }
 
@@ -157,6 +175,34 @@ Correo: ${userContext.user.correo}
                     contextPrompt += `   Asistencia Reciente:\n`;
                     child.attendance.slice(0, 5).forEach(att => {
                         contextPrompt += `   - ${new Date(att.fecha).toLocaleDateString('es-CO')}: ${att.estado}\n`;
+                    });
+                }
+
+                // Add tasks if available
+                if (child.tasks && child.tasks.length > 0) {
+                    contextPrompt += `   Tareas Asignadas:\n`;
+
+                    // Show task statistics
+                    if (child.taskStats) {
+                        contextPrompt += `   Estadísticas de Tareas:\n`;
+                        contextPrompt += `   - Total: ${child.taskStats.totalTareas}\n`;
+                        contextPrompt += `   - Entregadas: ${child.taskStats.tareasEntregadas}\n`;
+                        contextPrompt += `   - Pendientes: ${child.taskStats.tareasPendientes}\n`;
+                        contextPrompt += `   - Atrasadas: ${child.taskStats.tareasAtrasadas}\n`;
+                        contextPrompt += `   - Calificadas: ${child.taskStats.tareasCalificadas}\n`;
+                    }
+
+                    // Show recent/upcoming tasks
+                    child.tasks.slice(0, 10).forEach(task => {
+                        const status = task.estado === 'atrasada' ? '⚠️ ATRASADA' :
+                            task.estado === 'entregada' ? '✓ Entregada' :
+                                task.estado === 'calificada' ? `✓ Calificada (${task.nota})` :
+                                    '⏳ Pendiente';
+                        contextPrompt += `   - ${task.asignatura}: ${task.titulo} - ${status}\n`;
+                        contextPrompt += `     Entrega: ${new Date(task.fechaentrega).toLocaleDateString('es-CO')}\n`;
+                        if (task.descripcion) {
+                            contextPrompt += `     Descripción: ${task.descripcion}\n`;
+                        }
                     });
                 }
             });
