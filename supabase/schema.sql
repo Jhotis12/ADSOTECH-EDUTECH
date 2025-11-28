@@ -251,24 +251,24 @@ CREATE TABLE estadisticauso (
 -- ============================
 -- tareas
 -- ============================
-create table tarea (
-    idtarea serial primary key,
-    iddag int not null, -- docenteasignaturagrupo
-    titulo varchar(100) not null,
-    descripcion text,
-    fechaasignacion date not null,
-    fechaentrega date not null,
-    tipo varchar(50) -- ej: "trabajo en casa", "proyecto"
+CREATE TABLE tarea (
+    idtarea SERIAL PRIMARY KEY,
+    iddag INT NOT NULL REFERENCES docenteasignaturagrupo(iddag) ON DELETE CASCADE,
+    titulo VARCHAR(100) NOT NULL,
+    descripcion TEXT,
+    fechaasignacion DATE NOT NULL,
+    fechaentrega DATE NOT NULL,
+    tipo VARCHAR(50) -- ej: "trabajo en casa", "proyecto"
 );
 
 -- ============================
 -- entregas de tareas
 -- ============================
-create table entregatarea (
-    identrega serial primary key,
-    idtarea int not null,
-    idmatricula int not null,
-    fechaentrega date,
-    estado varchar(50), -- ej: "pendiente", "entregada", "calificada"
-    nota decimal(3,1) -- opcional, si se califica
+CREATE TABLE entregatarea (
+    identrega SERIAL PRIMARY KEY,
+    idtarea INT NOT NULL REFERENCES tarea(idtarea) ON DELETE CASCADE,
+    idmatricula INT NOT NULL REFERENCES matricula(idmatricula) ON DELETE CASCADE,
+    fechaentrega DATE,
+    estado VARCHAR(50), -- ej: "pendiente", "entregada", "calificada"
+    nota DECIMAL(3,1) -- opcional, si se califica
 );
