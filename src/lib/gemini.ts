@@ -42,6 +42,12 @@ export interface UserContext {
         fechafin: string;
         tipo: string;
     }>;
+    announcements?: Array<{
+        titulo: string;
+        mensaje: string;
+        fecha: string;
+        dirigidoa: string;
+    }>;
     children?: Array<{
         nombre: string;
         apellido: string;
@@ -251,6 +257,16 @@ Correo: ${userContext.user.correo}
                     contextPrompt += ` - ${new Date(event.fechafin).toLocaleString('es-CO')}`;
                 }
                 contextPrompt += `\n`;
+            });
+        }
+
+        // Add announcements
+        if (userContext.announcements && userContext.announcements.length > 0) {
+            contextPrompt += `\nComunicados Institucionales:\n`;
+            userContext.announcements.forEach((announcement, index) => {
+                contextPrompt += `${index + 1}. ${announcement.titulo} (${new Date(announcement.fecha).toLocaleDateString('es-CO')})\n`;
+                contextPrompt += `   Mensaje: ${announcement.mensaje}\n`;
+                contextPrompt += `   Dirigido a: ${announcement.dirigidoa}\n`;
             });
         }
 

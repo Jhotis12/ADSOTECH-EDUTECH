@@ -46,6 +46,7 @@ const StudentDashboard = () => {
     const [teachers, setTeachers] = useState<any[]>([]);
     const [schedules, setSchedules] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
+    const [announcements, setAnnouncements] = useState<any[]>([]);
     const [institutionLoaded, setInstitutionLoaded] = useState(false);
     const [showQuickActions, setShowQuickActions] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -67,6 +68,7 @@ const StudentDashboard = () => {
         }
         if (user && !institutionLoaded) {
             loadInstitutionAndTeachers();
+            loadAnnouncements();
         }
     }, [user, childrenLoaded, institutionLoaded]);
 
@@ -504,6 +506,25 @@ const StudentDashboard = () => {
         }
     };
 
+    const loadAnnouncements = async () => {
+        if (!user?.idinstitucion) return;
+
+        try {
+            const { data, error } = await supabase
+                .from('comunicado')
+                .select('*')
+                .eq('idinstitucion', user.idinstitucion)
+                .order('fecha', { ascending: false })
+                .limit(5);
+
+            if (!error && data) {
+                setAnnouncements(data);
+            }
+        } catch (error) {
+            console.error('Error loading announcements:', error);
+        }
+    };
+
     const loadSchedulesAndEvents = async () => {
         try {
             // Determine which group(s) to fetch schedules for
@@ -683,6 +704,7 @@ const StudentDashboard = () => {
                 teachers: teachers.length > 0 ? teachers : undefined,
                 schedules: schedules.length > 0 ? schedules : undefined,
                 events: events.length > 0 ? events : undefined,
+                announcements: announcements.length > 0 ? announcements : undefined,
                 children: children.length > 0 ? children : undefined
             };
 
