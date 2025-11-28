@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { Send, Loader2, LogOut, User } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Send, Loader2, LogOut, User, Sparkles, ChevronDown } from 'lucide-react';
 import { getGeminiResponseWithContext, type UserContext } from '../lib/gemini';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -45,6 +45,18 @@ const StudentDashboard = () => {
     const [institution, setInstitution] = useState<any>(null);
     const [teachers, setTeachers] = useState<any[]>([]);
     const [institutionLoaded, setInstitutionLoaded] = useState(false);
+    const [showQuickActions, setShowQuickActions] = useState(false);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isProfileExpanded, setIsProfileExpanded] = useState(false);
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    useEffect(() => {
+        scrollToBottom();
+    }, [messages, historyLoaded]);
 
     // Load children data and institution/teachers on mount (NOT history - user must click button)
     useEffect(() => {
@@ -456,42 +468,56 @@ const StudentDashboard = () => {
 
     return (
         <div className="fixed inset-0 bg-gray-50">
-            {/* Floating User Icon - Top Right */}
-            <div className="fixed top-6 right-6 z-50">
-                <div className="flex items-center gap-3 bg-white px-4 py-3 rounded-full shadow-lg border border-gray-100">
-                    <div className="text-right hidden sm:block">
-                        <p className="text-sm font-medium text-gray-900">
-                            {user ? `${user.nombre} ${user.apellido}` : 'Usuario'}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                            {user?.idrol === 1 ? 'Administrador' :
-                                user?.idrol === 2 ? 'Rector' :
-                                    user?.idrol === 3 ? 'Docente' :
-                                        user?.idrol === 4 ? 'Estudiante' :
-                                            user?.idrol === 5 ? 'Padre' :
-                                                user?.idrol === 6 ? 'Secretaría' : 'Usuario'}
-                        </p>
+            {/* Header / Top Bar */}
+            <div className="fixed top-0 left-0 right-0 z-50 bg-white md:bg-transparent shadow-sm md:shadow-none border-b md:border-none border-gray-100 md:fixed md:top-6 md:right-6 md:left-auto md:w-auto px-4 py-3 md:p-0 flex items-center justify-between md:justify-end gap-3">
+
+                {/* Mobile Brand - Visible only on mobile */}
+                <div className="md:hidden flex items-center gap-2 text-indigo-600 font-bold">
+                    <Sparkles size={20} />
+                    <span>EduTech AI</span>
+                </div>
+
+                {/* Actions Container */}
+                <div className="flex items-center gap-2 md:gap-3">
+                    <div
+                        onClick={() => setIsProfileExpanded(!isProfileExpanded)}
+                        className="flex items-center gap-2 md:gap-3 bg-indigo-50 md:bg-white px-3 py-2 md:px-4 md:py-3 rounded-full md:shadow-lg md:border border-gray-100 cursor-pointer transition-all duration-300"
+                    >
+                        <div className={`text-right overflow-hidden transition-all duration-300 ease-in-out ${isProfileExpanded ? 'max-w-[200px] opacity-100 mr-2' : 'max-w-0 opacity-0 md:max-w-[200px] md:opacity-100 md:mr-0'}`}>
+                            <p className="text-xs md:text-sm font-medium text-gray-900 whitespace-nowrap">
+                                {user ? `${user.nombre} ${user.apellido}` : 'Usuario'}
+                            </p>
+                            <p className="text-[10px] md:text-xs text-gray-500 whitespace-nowrap">
+                                {user?.idrol === 1 ? 'Administrador' :
+                                    user?.idrol === 2 ? 'Rector' :
+                                        user?.idrol === 3 ? 'Docente' :
+                                            user?.idrol === 4 ? 'Estudiante' :
+                                                user?.idrol === 5 ? 'Padre' :
+                                                    user?.idrol === 6 ? 'Secretaría' : 'Usuario'}
+                            </p>
+                        </div>
+                        <div className="w-8 h-8 md:w-10 md:h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 overflow-hidden shrink-0">
+                            <User size={16} className="md:w-5 md:h-5" />
+                        </div>
                     </div>
-                    <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 overflow-hidden">
-                        <User size={20} />
-                    </div>
+
+                    <button
+                        onClick={handleLogout}
+                        className="p-2 md:p-3 bg-white text-gray-700 rounded-full shadow-sm md:shadow-lg border border-gray-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
+                        title="Cerrar Sesión"
+                    >
+                        <LogOut size={18} className="md:w-5 md:h-5" />
+                    </button>
                 </div>
             </div>
 
-            {/* Logout Button - Bottom Right */}
-            <button
-                onClick={handleLogout}
-                className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-4 py-3 bg-white text-gray-700 rounded-full shadow-lg border border-gray-100 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors"
-            >
-                <LogOut size={20} />
-                <span className="font-medium">Cerrar Sesión</span>
-            </button>
+
 
             {/* Chatbot - Full Screen */}
-            <div className="h-full flex flex-col">
+            <div className="h-full flex flex-col pt-16 md:pt-0">
                 {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-6 space-y-4">
-                    <div className="max-w-4xl mx-auto space-y-4">
+                <div className="flex-1 overflow-y-auto p-3 md:p-6 space-y-3 md:space-y-4">
+                    <div className="max-w-4xl mx-auto space-y-3 md:space-y-4">
                         {/* Load History Button */}
                         {!historyLoaded && (
                             <div className="flex justify-center">
@@ -515,7 +541,7 @@ const StudentDashboard = () => {
                                 className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div
-                                    className={`max-w-[75%] p-4 rounded-2xl text-sm ${msg.isUser
+                                    className={`max-w-[85%] sm:max-w-[75%] p-3 md:p-4 rounded-2xl text-xs md:text-sm ${msg.isUser
                                         ? 'bg-indigo-600 text-white rounded-br-none'
                                         : 'bg-white text-gray-700 shadow-sm border border-gray-100 rounded-bl-none'
                                         }`}
@@ -531,52 +557,145 @@ const StudentDashboard = () => {
                                 </div>
                             </div>
                         )}
+                        <div ref={messagesEndRef} />
                     </div>
                 </div >
 
-                {/* Shortcuts */}
-                {
-                    messages.length === 1 && (
-                        <div className="px-6 py-3 bg-white border-t border-gray-100">
+                {/* Shortcuts - Collapsible */}
+                <div className="bg-white border-t border-gray-100 transition-all duration-300 ease-in-out">
+                    <button
+                        onClick={() => setShowSuggestions(!showSuggestions)}
+                        className="w-full flex items-center justify-between px-3 md:px-6 py-2 bg-gray-50 hover:bg-gray-100 transition-colors"
+                    >
+                        <span className="text-xs font-medium text-gray-600">Preguntas Frecuentes</span>
+                        <ChevronDown
+                            size={16}
+                            className={`text-gray-500 transition-transform duration-300 ${showSuggestions ? 'rotate-180' : ''}`}
+                        />
+                    </button>
+
+                    <div className={`overflow-hidden transition-all duration-300 ease-in-out ${showSuggestions ? 'max-h-[40vh] opacity-100' : 'max-h-0 opacity-0'}`}>
+                        <div className="px-3 md:px-6 py-3 overflow-y-auto max-h-[40vh]">
                             <div className="max-w-4xl mx-auto">
-                                <p className="text-xs text-gray-500 mb-2">Preguntas sugeridas:</p>
-                                <div className="flex flex-wrap gap-2">
-                                    {['Horarios', 'Calificaciones', 'Asistencia', 'Próximas actividades', 'Información del colegio'].map((shortcut) => (
-                                        <button
-                                            key={shortcut}
-                                            onClick={() => handleSend(shortcut)}
-                                            className="px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-xl hover:bg-indigo-100 transition-colors"
-                                        >
-                                            {shortcut}
-                                        </button>
+                                <div className="space-y-3">
+                                    {(user?.idrol === 4 ? [
+                                        {
+                                            title: 'Certificados y Reportes',
+                                            questions: ['Generar mi certificado de estudio', 'Análisis de mi rendimiento']
+                                        },
+                                        {
+                                            title: 'Notas',
+                                            questions: ['¿Cuál es mi promedio general?', 'Ver mis calificaciones']
+                                        },
+                                        {
+                                            title: 'Asistencia',
+                                            questions: ['¿Cuántas inasistencias tengo?']
+                                        }
+                                    ] : user?.idrol === 5 ? [
+                                        {
+                                            title: 'Certificados y Reportes',
+                                            questions: ['Generar certificado de estudio', 'Información de los docentes']
+                                        },
+                                        {
+                                            title: 'Notas',
+                                            questions: ['¿Cómo es el rendimiento de mi hijo?', 'Ver calificaciones del estudiante']
+                                        },
+                                        {
+                                            title: 'Asistencia',
+                                            questions: ['Reporte de asistencia']
+                                        }
+                                    ] : [
+                                        {
+                                            title: 'General',
+                                            questions: ['Información del colegio', 'Horarios de atención', 'Eventos próximos', 'Trámites disponibles']
+                                        }
+                                    ]).map((section, idx) => (
+                                        <div key={idx}>
+                                            <p className="text-[10px] uppercase tracking-wider font-semibold text-gray-400 mb-1.5">{section.title}</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {section.questions.map((question) => (
+                                                    <button
+                                                        key={question}
+                                                        onClick={() => handleSend(question)}
+                                                        className="px-3 py-1.5 md:px-4 md:py-2 bg-indigo-50 text-indigo-600 text-xs md:text-sm font-medium rounded-xl hover:bg-indigo-100 transition-colors"
+                                                    >
+                                                        {question}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
                                     ))}
                                 </div>
                             </div>
                         </div>
-                    )
-                }
+                    </div>
+                </div>
 
                 {/* Input */}
-                <div className="p-6 bg-white border-t border-gray-200">
+                <div className="p-3 md:p-6 bg-white border-t border-gray-200">
                     <div className="max-w-4xl mx-auto">
                         <form
                             onSubmit={(e) => { e.preventDefault(); handleSend(); }}
-                            className="flex items-center gap-3"
+                            className="flex items-center gap-2 md:gap-3 relative"
                         >
+                            {/* Quick Actions Button */}
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onMouseEnter={() => setShowQuickActions(true)}
+                                    onMouseLeave={() => setShowQuickActions(false)}
+                                    onClick={() => setShowQuickActions(!showQuickActions)}
+                                    className="p-3 md:p-4 bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
+                                >
+                                    <Sparkles size={18} className="md:w-5 md:h-5" />
+                                </button>
+
+                                {/* Quick Actions Menu */}
+                                {showQuickActions && (
+                                    <div
+                                        className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50"
+                                        onMouseEnter={() => setShowQuickActions(true)}
+                                        onMouseLeave={() => setShowQuickActions(false)}
+                                    >
+                                        <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Acciones Rápidas</p>
+                                        {[
+                                            { label: 'Análisis educativo', prompt: 'Dame un análisis completo del rendimiento académico' },
+                                            { label: 'Recursos integrados', prompt: 'Muéstrame los recursos educativos disponibles' },
+                                            { label: 'Generar certificado', prompt: 'Genera un certificado de estudio' },
+                                            { label: 'Ver calificaciones', prompt: 'Muéstrame las calificaciones' },
+                                            { label: 'Ver asistencia', prompt: 'Muéstrame el reporte de asistencia' },
+                                            { label: 'Próximas actividades', prompt: 'Cuáles son las próximas actividades' }
+                                        ].map((action, idx) => (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => {
+                                                    handleSend(action.prompt);
+                                                    setShowQuickActions(false);
+                                                }}
+                                                className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 transition-colors text-sm text-gray-700 hover:text-indigo-600"
+                                            >
+                                                {action.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
                             <input
                                 type="text"
                                 value={input}
                                 onChange={(e) => setInput(e.target.value)}
                                 placeholder="Escribe tu pregunta aquí..."
                                 disabled={isLoading}
-                                className="flex-1 p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-sm disabled:opacity-50"
+                                className="flex-1 p-3 md:p-4 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-indigo-100 focus:border-indigo-500 outline-none text-xs md:text-sm disabled:opacity-50"
                             />
                             <button
                                 type="submit"
                                 disabled={isLoading || !input.trim()}
-                                className="p-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="p-3 md:p-4 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                <Send size={20} />
+                                <Send size={18} className="md:w-5 md:h-5" />
                             </button>
                         </form>
                     </div>
