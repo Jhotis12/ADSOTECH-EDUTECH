@@ -21,7 +21,8 @@ export interface Usuario {
     idrol: number;
     nombre: string;
     apellido: string;
-    urlfotoperfil: string | null;
+    tipodocumento: string | null;
+    documento: string | null;
     correo: string;
     telefono: string;
     genero: string;

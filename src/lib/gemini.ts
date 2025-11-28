@@ -31,6 +31,8 @@ export interface UserContext {
         nombre: string;
         apellido: string;
         correo: string;
+        tipodocumento?: string;
+        documento?: string;
         grades?: Array<{
             asignatura: string;
             nota: number;
@@ -112,7 +114,12 @@ Correo: ${userContext.user.correo}
                 : `\nHijos/Estudiantes a cargo:\n`;
 
             userContext.children.forEach((child, index) => {
-                contextPrompt += `\n${index + 1}. ${child.nombre} ${child.apellido} (${child.correo})\n`;
+                const docInfo = child.tipodocumento && child.documento
+                    ? ` - ${child.tipodocumento}: ${child.documento}`
+                    : child.documento
+                        ? ` - Documento: ${child.documento}`
+                        : '';
+                contextPrompt += `\n${index + 1}. ${child.nombre} ${child.apellido} (${child.correo})${docInfo}\n`;
 
                 // Add statistics if available
                 if (child.stats) {

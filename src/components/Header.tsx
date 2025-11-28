@@ -59,11 +59,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                                 </p>
                             </div>
                             <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 overflow-hidden">
-                                {user?.urlfotoperfil ? (
-                                    <img src={user.urlfotoperfil} alt="Perfil" className="w-full h-full object-cover" />
-                                ) : (
-                                    <User size={20} />
-                                )}
+                                <User size={20} />
                             </div>
                         </div>
 

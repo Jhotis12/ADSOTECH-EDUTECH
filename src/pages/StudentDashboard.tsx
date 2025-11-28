@@ -11,6 +11,8 @@ interface Child {
     nombre: string;
     apellido: string;
     correo: string;
+    tipodocumento?: string;
+    documento?: string;
     grades?: Array<{
         asignatura: string;
         nota: number;
@@ -66,7 +68,9 @@ const StudentDashboard = () => {
                             idusuario,
                             nombre,
                             apellido,
-                            correo
+                            correo,
+                            tipodocumento,
+                            documento
                         )
                     `)
                     .eq('idpadre', user.idusuario);
@@ -144,6 +148,8 @@ const StudentDashboard = () => {
                                 nombre: item.usuario?.nombre || '',
                                 apellido: item.usuario?.apellido || '',
                                 correo: item.usuario?.correo || '',
+                                tipodocumento: item.usuario?.tipodocumento || '',
+                                documento: item.usuario?.documento || '',
                                 grades,
                                 attendance,
                                 stats: {
@@ -227,6 +233,8 @@ const StudentDashboard = () => {
                     nombre: user.nombre,
                     apellido: user.apellido,
                     correo: user.correo,
+                    tipodocumento: user.tipodocumento || '',
+                    documento: user.documento || '',
                     grades,
                     attendance,
                     stats: {
@@ -465,11 +473,7 @@ const StudentDashboard = () => {
                         </p>
                     </div>
                     <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 overflow-hidden">
-                        {user?.urlfotoperfil ? (
-                            <img src={user.urlfotoperfil} alt="Perfil" className="w-full h-full object-cover" />
-                        ) : (
-                            <User size={20} />
-                        )}
+                        <User size={20} />
                     </div>
                 </div>
             </div>
