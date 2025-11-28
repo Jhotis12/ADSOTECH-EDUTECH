@@ -12,6 +12,21 @@ export interface UserContext {
         rol: string;
         correo: string;
     };
+    institution?: {
+        nombre: string;
+        direccion: string;
+        telefono: string;
+        correo: string;
+        tipo: string;
+        ciudad: string;
+        departamento: string;
+    };
+    teachers?: Array<{
+        nombre: string;
+        apellido: string;
+        correo: string;
+        asignaturas: string[];
+    }>;
     children?: Array<{
         nombre: string;
         apellido: string;
@@ -113,6 +128,28 @@ Correo: ${userContext.user.correo}
                     child.attendance.slice(0, 5).forEach(att => {
                         contextPrompt += `   - ${new Date(att.fecha).toLocaleDateString('es-CO')}: ${att.estado}\n`;
                     });
+                }
+            });
+        }
+
+        // Add institution information
+        if (userContext.institution) {
+            contextPrompt += `\nInformación de la Institución:\n`;
+            contextPrompt += `- Nombre: ${userContext.institution.nombre}\n`;
+            contextPrompt += `- Dirección: ${userContext.institution.direccion}\n`;
+            contextPrompt += `- Ciudad: ${userContext.institution.ciudad}, ${userContext.institution.departamento}\n`;
+            contextPrompt += `- Teléfono: ${userContext.institution.telefono}\n`;
+            contextPrompt += `- Correo: ${userContext.institution.correo}\n`;
+            contextPrompt += `- Tipo: ${userContext.institution.tipo}\n`;
+        }
+
+        // Add teachers information
+        if (userContext.teachers && userContext.teachers.length > 0) {
+            contextPrompt += `\nProfesores de la Institución:\n`;
+            userContext.teachers.forEach((teacher, index) => {
+                contextPrompt += `${index + 1}. ${teacher.nombre} ${teacher.apellido} (${teacher.correo})\n`;
+                if (teacher.asignaturas && teacher.asignaturas.length > 0) {
+                    contextPrompt += `   Asignaturas: ${teacher.asignaturas.join(', ')}\n`;
                 }
             });
         }

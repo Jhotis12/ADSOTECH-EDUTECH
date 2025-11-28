@@ -39,16 +39,19 @@ const StudentDashboard = () => {
     const [historyLoaded, setHistoryLoaded] = useState(false);
     const [children, setChildren] = useState<Child[]>([]);
     const [childrenLoaded, setChildrenLoaded] = useState(false);
+    const [institution, setInstitution] = useState<any>(null);
+    const [teachers, setTeachers] = useState<any[]>([]);
+    const [institutionLoaded, setInstitutionLoaded] = useState(false);
 
-    // Load conversation history and children data on mount
+    // Load children data and institution/teachers on mount (NOT history - user must click button)
     useEffect(() => {
-        if (user && !historyLoaded) {
-            loadConversationHistory();
-        }
         if (user && !childrenLoaded) {
             loadChildrenData();
         }
-    }, [user, historyLoaded, childrenLoaded]);
+        if (user && !institutionLoaded) {
+            loadInstitutionAndTeachers();
+        }
+    }, [user, childrenLoaded, institutionLoaded]);
 
     const loadChildrenData = async () => {
         try {
@@ -162,7 +165,57 @@ const StudentDashboard = () => {
         }
     };
 
+    const loadInstitutionAndTeachers = async () => {
+        try {
+            // Fetch institution data
+            if (user?.idinstitucion) {
+                const { data: institutionData, error: instError } = await supabase
+                    .from('institucion')
+                    .select('*')
+                    .eq('idinstitucion', user.idinstitucion)
+                    .single();
+
+                if (!instError && institutionData) {
+                    setInstitution(institutionData);
+                }
+            }
+
+            // Fetch teachers (usuarios with idrol = 3)
+            const { data: teachersData, error: teachersError } = await supabase
+                .from('usuario')
+                .select(`
+                    nombre,
+                    apellido,
+                    correo,
+                    docenteasignaturagrupo(
+                        asignatura:idasignatura(
+                            nombre
+                        )
+                    )
+                `)
+                .eq('idrol', 3)
+                .eq('idinstitucion', user?.idinstitucion);
+
+            if (!teachersError && teachersData) {
+                const formattedTeachers = teachersData.map((teacher: any) => ({
+                    nombre: teacher.nombre,
+                    apellido: teacher.apellido,
+                    correo: teacher.correo,
+                    asignaturas: teacher.docenteasignaturagrupo?.map((dag: any) => dag.asignatura?.nombre).filter(Boolean) || []
+                }));
+                setTeachers(formattedTeachers);
+            }
+
+            setInstitutionLoaded(true);
+        } catch (error) {
+            console.error('Error loading institution and teachers:', error);
+            setInstitutionLoaded(true);
+        }
+    };
+
     const loadConversationHistory = async () => {
+        if (historyLoaded) return; // Don't load twice
+
         try {
             const { data, error } = await supabase
                 .from('interaccion')
@@ -173,9 +226,7 @@ const StudentDashboard = () => {
             if (error) throw error;
 
             if (data && data.length > 0) {
-                const historyMessages: { text: string; isUser: boolean }[] = [
-                    { text: '¡Hola! Soy el asistente virtual de EduTech. ¿En qué puedo ayudarte hoy?', isUser: false }
-                ];
+                const historyMessages: { text: string; isUser: boolean }[] = [];
 
                 data.forEach((interaction: any) => {
                     historyMessages.push({ text: interaction.mensaje, isUser: true });
@@ -184,7 +235,8 @@ const StudentDashboard = () => {
                     }
                 });
 
-                setMessages(historyMessages);
+                // Prepend history to current messages (keep greeting at top)
+                setMessages(prev => [prev[0], ...historyMessages, ...prev.slice(1)]);
             }
             setHistoryLoaded(true);
         } catch (error) {
@@ -226,6 +278,16 @@ const StudentDashboard = () => {
                     rol: user.idrol.toString(),
                     correo: user.correo
                 },
+                institution: institution ? {
+                    nombre: institution.nombre,
+                    direccion: institution.direccion,
+                    telefono: institution.telefono,
+                    correo: institution.correo,
+                    tipo: institution.tipo,
+                    ciudad: institution.ciudad,
+                    departamento: institution.departamento
+                } : undefined,
+                teachers: teachers.length > 0 ? teachers : undefined,
                 children: children.length > 0 ? children : undefined
             };
 
@@ -298,6 +360,23 @@ const StudentDashboard = () => {
                 {/* Messages */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-4">
                     <div className="max-w-4xl mx-auto space-y-4">
+                        {/* Load History Button */}
+                        {!historyLoaded && (
+                            <div className="flex justify-center">
+                                <button
+                                    onClick={loadConversationHistory}
+                                    className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-xl hover:bg-indigo-200 transition-colors flex items-center gap-2 text-sm font-medium"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M3 3v5h5" />
+                                        <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
+                                        <path d="M12 7v5l4 2" />
+                                    </svg>
+                                    Cargar Historial Anterior
+                                </button>
+                            </div>
+                        )}
+
                         {messages.map((msg, idx) => (
                             <div
                                 key={idx}
