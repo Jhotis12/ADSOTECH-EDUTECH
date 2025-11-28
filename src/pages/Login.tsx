@@ -20,7 +20,7 @@ const Login = () => {
             const { error } = await login(email, password);
 
             if (error) throw new Error(error);
-            navigate('/');
+            navigate('/dashboard');
         } catch (err: any) {
             setError(err.message);
         } finally {

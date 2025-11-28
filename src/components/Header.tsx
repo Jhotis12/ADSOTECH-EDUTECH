@@ -1,17 +1,35 @@
 
-import { Bell, Search, User, LogIn } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Bell, Search, User, LogIn, LogOut } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 interface HeaderProps {
     isAuthenticated: boolean;
 }
 
+const getRoleName = (idrol: number | undefined): string => {
+    const roles: { [key: number]: string } = {
+        1: 'Administrador',
+        2: 'Rector',
+        3: 'Docente',
+        4: 'Estudiante',
+        5: 'Padre',
+        6: 'Secretaría'
+    };
+    return roles[idrol || 0] || 'Usuario';
+};
+
 const Header = ({ isAuthenticated }: HeaderProps) => {
-    const { user } = useAuth();
+    const { user, logout } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/');
+    };
 
     return (
-        <header className={`h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 fixed top-0 right-0 left-0 ${isAuthenticated ? 'md:left-64' : 'left-0'} z-10 px-6 flex items-center justify-between transition-all duration-300`}>
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 fixed top-0 right-0 left-0 z-10 px-6 flex items-center justify-between transition-all duration-300">
             <div className="flex items-center gap-4 w-full max-w-md">
                 <div className="relative w-full">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
@@ -37,7 +55,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                                     {user ? `${user.nombre} ${user.apellido}` : 'Usuario'}
                                 </p>
                                 <p className="text-xs text-gray-500">
-                                    {user?.idrol === 1 ? 'Administrador' : user?.idrol === 2 ? 'Docente' : 'Estudiante'}
+                                    {getRoleName(user?.idrol)}
                                 </p>
                             </div>
                             <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 overflow-hidden">
@@ -48,6 +66,14 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                                 )}
                             </div>
                         </div>
+
+                        <button
+                            onClick={handleLogout}
+                            className="ml-3 p-2 text-gray-500 hover:bg-red-50 hover:text-red-600 rounded-full transition-colors"
+                            title="Cerrar Sesión"
+                        >
+                            <LogOut size={20} />
+                        </button>
                     </>
                 ) : (
                     <Link to="/login" className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors text-sm font-medium">

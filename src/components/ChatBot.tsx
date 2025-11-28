@@ -2,14 +2,21 @@ import { useState } from 'react';
 import { MessageCircle, X, Send, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getGeminiResponse } from '../lib/gemini';
+import { useLocation } from 'react-router-dom';
 
 const ChatBot = () => {
+    const location = useLocation();
     const [isOpen, setIsOpen] = useState(false);
     const [messages, setMessages] = useState<{ text: string; isUser: boolean }[]>([
         { text: '¡Hola! Soy el asistente virtual de EduTech. ¿En qué puedo ayudarte hoy?', isUser: false }
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+
+    // Hide chatbot on dashboard page
+    if (location.pathname === '/dashboard') {
+        return null;
+    }
 
     const handleSend = async (textToSend?: string) => {
         const messageText = textToSend || input;

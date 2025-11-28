@@ -15,11 +15,11 @@ const Sidebar = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/login');
+        navigate('/');
     };
 
     const navItems = [
-        { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
+        { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
         { icon: HelpCircle, label: 'Preguntas Frecuentes', path: '/faq' },
         { icon: FileText, label: 'Gestor de Trámites', path: '/tramites' },
         { icon: BarChart2, label: 'Análisis Educativo', path: '/analisis' },

@@ -20,5 +20,5 @@ export const supabase = createClient(
 );
 
 if (!isConfigured) {
-  console.warn('Supabase not configured. Please check your .env file.');
+  console.warn('Supabase no configurado. verificar .env.');
 }

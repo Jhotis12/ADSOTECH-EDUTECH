@@ -1,7 +1,7 @@
 import { Outlet, Navigate, useLocation } from 'react-router-dom';
-import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 import ChatBot from '../components/ChatBot';
+import Footer from '../components/Footer';
 import { useAuth } from '../context/AuthContext';
 
 const MainLayout = () => {
@@ -17,21 +17,25 @@ const MainLayout = () => {
         );
     }
 
-    // Allow public access to landing page ('/')
-    // For all other routes, require authentication
+    // Redirect authenticated users from landing page to dashboard
+    if (isAuthenticated && location.pathname === '/') {
+        return <Navigate to="/dashboard" replace />;
+    }
+
+    // Redirect unauthenticated users to login for protected routes (not landing page)
     if (!isAuthenticated && location.pathname !== '/') {
         return <Navigate to="/login" replace />;
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
-            {isAuthenticated && <Sidebar />}
-            <Header isAuthenticated={isAuthenticated} />
-            <main className={`pt-20 min-h-screen transition-all duration-300 ${isAuthenticated ? 'md:pl-64' : 'pl-0'}`}>
-                <div className="p-6 max-w-7xl mx-auto">
+        <div className="min-h-screen bg-gray-50 flex flex-col">
+            {location.pathname !== '/dashboard' && <Header isAuthenticated={isAuthenticated} />}
+            <main className={location.pathname === '/dashboard' ? '' : 'pt-20 flex-1'}>
+                <div className={location.pathname === '/dashboard' ? '' : 'p-6 max-w-7xl mx-auto'}>
                     <Outlet />
                 </div>
             </main>
+            {location.pathname === '/' && <Footer />}
             <ChatBot />
         </div>
     );
