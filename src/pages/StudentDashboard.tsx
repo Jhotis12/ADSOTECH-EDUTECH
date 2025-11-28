@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { generateStudyCertificate, generateStudyProof, generateAttendanceReport, generateGradesReport } from '../lib/pdfGenerator';
+import EducationalAnalysisDashboard from '../components/EducationalAnalysisDashboard';
 
 
 interface Child {
@@ -51,6 +52,7 @@ const StudentDashboard = () => {
     const [showQuickActions, setShowQuickActions] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isProfileExpanded, setIsProfileExpanded] = useState(false);
+    const [showAnalysisDashboard, setShowAnalysisDashboard] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -172,8 +174,8 @@ const StudentDashboard = () => {
                                 : 0;
 
                             const totalAsistencias = attendance.length;
-                            const totalPresentes = attendance.filter(a => a.estado === 'Presente').length;
-                            const totalInasistencias = attendance.filter(a => a.estado === 'Ausente').length;
+                            const totalPresentes = attendance.filter(a => ['Presente', 'Asistió', 'Asistio'].includes(a.estado)).length;
+                            const totalInasistencias = attendance.filter(a => ['Ausente', 'Falta', 'Inasistencia'].includes(a.estado)).length;
                             const porcentajeAsistencia = totalAsistencias > 0
                                 ? Math.round((totalPresentes / totalAsistencias) * 100)
                                 : 0;
@@ -228,7 +230,7 @@ const StudentDashboard = () => {
                                         let nota = undefined;
 
                                         if (submission) {
-                                            estado = submission.estado || 'entregada';
+                                            estado = (submission.estado || 'entregada').toLowerCase();
                                             fechaentregado = submission.fechaentrega;
                                             nota = submission.nota;
                                         } else {
@@ -342,8 +344,8 @@ const StudentDashboard = () => {
                     : 0;
 
                 const totalAsistencias = attendance.length;
-                const totalPresentes = attendance.filter(a => a.estado === 'Presente').length;
-                const totalInasistencias = attendance.filter(a => a.estado === 'Ausente').length;
+                const totalPresentes = attendance.filter(a => ['Presente', 'Asistió', 'Asistio'].includes(a.estado)).length;
+                const totalInasistencias = attendance.filter(a => ['Ausente', 'Falta', 'Inasistencia'].includes(a.estado)).length;
                 const porcentajeAsistencia = totalAsistencias > 0
                     ? Math.round((totalPresentes / totalAsistencias) * 100)
                     : 0;
@@ -398,7 +400,7 @@ const StudentDashboard = () => {
                             let nota = undefined;
 
                             if (submission) {
-                                estado = submission.estado || 'entregada';
+                                estado = (submission.estado || 'entregada').toLowerCase();
                                 fechaentregado = submission.fechaentrega;
                                 nota = submission.nota;
                             } else {
@@ -986,7 +988,11 @@ const StudentDashboard = () => {
                                                 key={idx}
                                                 type="button"
                                                 onClick={() => {
-                                                    handleSend(action.prompt);
+                                                    if (action.label === 'Análisis educativo') {
+                                                        setShowAnalysisDashboard(true);
+                                                    } else {
+                                                        handleSend(action.prompt);
+                                                    }
                                                     setShowQuickActions(false);
                                                 }}
                                                 className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 transition-colors text-sm text-gray-700 hover:text-indigo-600"
@@ -1017,6 +1023,36 @@ const StudentDashboard = () => {
                     </div>
                 </div>
             </div >
+
+            {/* Educational Analysis Dashboard Modal */}
+            {user && (
+                <EducationalAnalysisDashboard
+                    isOpen={showAnalysisDashboard}
+                    onClose={() => setShowAnalysisDashboard(false)}
+                    userContext={{
+                        user: {
+                            nombre: user.nombre,
+                            apellido: user.apellido,
+                            rol: user.idrol.toString(),
+                            correo: user.correo
+                        },
+                        institution: institution ? {
+                            nombre: institution.nombre,
+                            direccion: institution.direccion,
+                            telefono: institution.telefono,
+                            correo: institution.correo,
+                            tipo: institution.tipo,
+                            ciudad: institution.ciudad,
+                            departamento: institution.departamento
+                        } : undefined,
+                        teachers: teachers.length > 0 ? teachers : undefined,
+                        schedules: schedules.length > 0 ? schedules : undefined,
+                        events: events.length > 0 ? events : undefined,
+                        announcements: announcements.length > 0 ? announcements : undefined,
+                        children: children.length > 0 ? children : undefined
+                    }}
+                />
+            )}
         </div >
     );
 };
