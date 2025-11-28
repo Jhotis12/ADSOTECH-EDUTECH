@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 
 // Extend jsPDF type to include autotable
 declare module 'jspdf' {
@@ -135,15 +135,23 @@ export const generateAttendanceReport = (student: Student, institution: Institut
     doc.text(`Estudiante: ${student.nombre} ${student.apellido}`, 20, 75);
     doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-CO')}`, 20, 82);
 
+    // Validate attendance array
+    if (!attendance || !Array.isArray(attendance) || attendance.length === 0) {
+        doc.setFontSize(10);
+        doc.text('No hay registros de asistencia disponibles.', 20, 100);
+        addFooter(doc);
+        doc.save(`Reporte_Asistencia_${student.nombre}_${student.apellido}.pdf`);
+        return;
+    }
+
     const tableData = attendance.map(a => [
         new Date(a.fecha).toLocaleDateString('es-CO'),
-        a.estado,
-        a.observacion || '-'
+        a.estado
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: 90,
-        head: [['Fecha', 'Estado', 'Observación']],
+        head: [['Fecha', 'Estado']],
         body: tableData,
         theme: 'grid',
         headStyles: { fillColor: [63, 81, 181] }, // Indigo color
@@ -152,7 +160,7 @@ export const generateAttendanceReport = (student: Student, institution: Institut
 
     // Summary
     const total = attendance.length;
-    const absences = attendance.filter(a => a.estado === 'Ausente').length;
+    const absences = attendance.filter(a => a.estado === 'Falta').length;
     const percentage = total > 0 ? Math.round(((total - absences) / total) * 100) : 0;
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
@@ -182,6 +190,15 @@ export const generateGradesReport = (student: Student, institution: Institution,
     doc.text(`Estudiante: ${student.nombre} ${student.apellido}`, 20, 75);
     doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-CO')}`, 20, 82);
 
+    // Validate grades array
+    if (!grades || !Array.isArray(grades) || grades.length === 0) {
+        doc.setFontSize(10);
+        doc.text('No hay calificaciones registradas.', 20, 100);
+        addFooter(doc);
+        doc.save(`Reporte_Calificaciones_${student.nombre}_${student.apellido}.pdf`);
+        return;
+    }
+
     const tableData = grades.map(g => [
         g.asignatura,
         g.nota.toFixed(2),
@@ -189,7 +206,7 @@ export const generateGradesReport = (student: Student, institution: Institution,
         new Date(g.fecha).toLocaleDateString('es-CO')
     ]);
 
-    doc.autoTable({
+    autoTable(doc, {
         startY: 90,
         head: [['Asignatura', 'Nota', 'Tipo', 'Fecha']],
         body: tableData,
