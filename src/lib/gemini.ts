@@ -248,7 +248,7 @@ Correo: ${userContext.user.correo}
 
         // Add events information
         if (userContext.events && userContext.events.length > 0) {
-            contextPrompt += `\nEventos y Reuniones Programadas:\n`;
+            contextPrompt += `\nEventos y Reuniones (Recientes y Próximos):\n`;
             userContext.events.forEach((event, index) => {
                 contextPrompt += `${index + 1}. ${event.titulo} (${event.tipo})\n`;
                 contextPrompt += `   Descripción: ${event.descripcion}\n`;

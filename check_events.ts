@@ -9,35 +9,22 @@ const supabase = createClient(supabaseUrl, supabaseKey);
 async function checkEvents() {
     console.log('Checking events...');
 
-    // Get all events without filter first
-    const { data: allEvents, error: allEventsError } = await supabase
-        .from('evento')
-        .select('*');
+    const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+    console.log(`Start of year: ${startOfYear.toISOString()}`);
 
-    if (allEventsError) {
-        console.error('Error fetching all events:', allEventsError);
-    } else {
-        console.log(`Total events found: ${allEvents?.length}`);
-        allEvents?.forEach(e => {
-            console.log(`- ${e.titulo} (Start: ${e.fechainicio}, End: ${e.fechafin})`);
-        });
-    }
-
-    const now = new Date().toISOString();
-    console.log(`\nCurrent time (ISO): ${now}`);
-
-    // Test the filter used in the app
+    // Test the NEW filter
     const { data: filteredEvents, error: filteredError } = await supabase
         .from('evento')
         .select('*')
-        .gte('fechafin', now);
+        .gte('fechainicio', startOfYear.toISOString())
+        .order('fechainicio', { ascending: true });
 
     if (filteredError) {
         console.error('Error fetching filtered events:', filteredError);
     } else {
-        console.log(`Filtered events (fechafin >= now): ${filteredEvents?.length}`);
+        console.log(`\n--- FILTERED EVENTS (>= ${startOfYear.toISOString()}) ---`);
         filteredEvents?.forEach(e => {
-            console.log(`- ${e.titulo}`);
+            console.log(`- ${e.titulo} (${e.fechainicio})`);
         });
     }
 }

@@ -602,11 +602,13 @@ const StudentDashboard = () => {
 
             // Fetch events for the institution
             if (user?.idinstitucion) {
+                const startOfYear = new Date(new Date().getFullYear(), 0, 1);
+
                 const { data: eventsData } = await supabase
                     .from('evento')
                     .select('*')
                     .eq('idinstitucion', user.idinstitucion)
-                    .gte('fechafin', new Date().toISOString()) // Only future/ongoing events
+                    .gte('fechainicio', startOfYear.toISOString()) // Include all events from current year
                     .order('fechainicio', { ascending: true });
 
                 if (eventsData) {
