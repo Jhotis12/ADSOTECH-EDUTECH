@@ -39,7 +39,7 @@ const StudentDashboard = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('/');
+        navigate('https://adsotech-edutech.vercel.app/');
     };
 
     return (
