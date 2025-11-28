@@ -79,3 +79,19 @@ export interface Evento {
     fechafin: string;
     tipo: string;
 }
+
+export interface estadisticauso {
+    idestadistica: number;
+    categoria: string;
+    valor: number;
+    fecha: string;
+}
+
+export interface Interaccion {
+    idinteraccion: number;
+    idusuario: number | null;
+    mensaje: string;
+    respuesta: string | null;
+    categoria: string | null;
+    fecha: string;
+}

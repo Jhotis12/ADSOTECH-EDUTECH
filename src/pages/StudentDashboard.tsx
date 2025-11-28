@@ -1,8 +1,32 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Send, Loader2, LogOut, User } from 'lucide-react';
-import { getGeminiResponse } from '../lib/gemini';
+import { getGeminiResponseWithContext, type UserContext } from '../lib/gemini';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
+
+
+interface Child {
+    nombre: string;
+    apellido: string;
+    correo: string;
+    grades?: Array<{
+        asignatura: string;
+        nota: number;
+        tipo: string;
+        fecha: string;
+    }>;
+    attendance?: Array<{
+        fecha: string;
+        estado: string;
+    }>;
+    stats?: {
+        promedioGeneral: number;
+        porcentajeAsistencia: number;
+        totalInasistencias: number;
+        totalEvaluaciones: number;
+    };
+}
 
 const StudentDashboard = () => {
     const { user, logout } = useAuth();
@@ -12,26 +36,216 @@ const StudentDashboard = () => {
     ]);
     const [input, setInput] = useState('');
     const [isLoading, setIsLoading] = useState(false);
+    const [historyLoaded, setHistoryLoaded] = useState(false);
+    const [children, setChildren] = useState<Child[]>([]);
+    const [childrenLoaded, setChildrenLoaded] = useState(false);
+
+    // Load conversation history and children data on mount
+    useEffect(() => {
+        if (user && !historyLoaded) {
+            loadConversationHistory();
+        }
+        if (user && !childrenLoaded) {
+            loadChildrenData();
+        }
+    }, [user, historyLoaded, childrenLoaded]);
+
+    const loadChildrenData = async () => {
+        try {
+            // Fetch children for parent users (idrol = 5)
+            if (user?.idrol === 5) {
+                const { data, error } = await supabase
+                    .from('padreestudiante')
+                    .select(`
+                        idestudiante,
+                        usuario:idestudiante (
+                            idusuario,
+                            nombre,
+                            apellido,
+                            correo
+                        )
+                    `)
+                    .eq('idpadre', user.idusuario);
+
+                if (error) throw error;
+
+                if (data && data.length > 0) {
+                    // Fetch academic data for each child
+                    const childrenWithData = await Promise.all(
+                        data.map(async (item: any) => {
+                            const childId = item.usuario?.idusuario;
+
+                            // Fetch grades
+                            const { data: gradesData } = await supabase
+                                .from('nota')
+                                .select(`
+                                    nota,
+                                    evaluacion:idevaluacion (
+                                        titulo,
+                                        tipo,
+                                        fecha,
+                                        docenteasignaturagrupo:iddag (
+                                            asignatura:idasignatura (
+                                                nombre
+                                            )
+                                        )
+                                    ),
+                                    matricula:idmatricula (
+                                        idestudiante
+                                    )
+                                `)
+                                .eq('matricula.idestudiante', childId);
+
+                            // Fetch attendance
+                            const { data: attendanceData } = await supabase
+                                .from('asistencia')
+                                .select(`
+                                    fecha,
+                                    estado,
+                                    matricula:idmatricula (
+                                        idestudiante
+                                    )
+                                `)
+                                .eq('matricula.idestudiante', childId)
+                                .order('fecha', { ascending: false });
+
+                            // Format grades
+                            const grades = gradesData?.map((g: any) => ({
+                                asignatura: g.evaluacion?.docenteasignaturagrupo?.asignatura?.nombre || 'N/A',
+                                nota: g.nota,
+                                tipo: g.evaluacion?.tipo || 'N/A',
+                                fecha: g.evaluacion?.fecha || new Date().toISOString()
+                            })) || [];
+
+                            // Format attendance
+                            const attendance = attendanceData?.map((a: any) => ({
+                                fecha: a.fecha,
+                                estado: a.estado
+                            })) || [];
+
+                            // Calculate statistics
+                            const totalEvaluaciones = grades.length;
+                            const promedioGeneral = totalEvaluaciones > 0
+                                ? grades.reduce((sum, g) => sum + g.nota, 0) / totalEvaluaciones
+                                : 0;
+
+                            const totalAsistencias = attendance.length;
+                            const totalPresentes = attendance.filter(a => a.estado === 'Presente').length;
+                            const totalInasistencias = attendance.filter(a => a.estado === 'Ausente').length;
+                            const porcentajeAsistencia = totalAsistencias > 0
+                                ? Math.round((totalPresentes / totalAsistencias) * 100)
+                                : 0;
+
+                            return {
+                                nombre: item.usuario?.nombre || '',
+                                apellido: item.usuario?.apellido || '',
+                                correo: item.usuario?.correo || '',
+                                grades,
+                                attendance,
+                                stats: {
+                                    promedioGeneral,
+                                    porcentajeAsistencia,
+                                    totalInasistencias,
+                                    totalEvaluaciones
+                                }
+                            };
+                        })
+                    );
+
+                    setChildren(childrenWithData);
+                }
+            }
+            setChildrenLoaded(true);
+        } catch (error) {
+            console.error('Error loading children data:', error);
+            setChildrenLoaded(true);
+        }
+    };
+
+    const loadConversationHistory = async () => {
+        try {
+            const { data, error } = await supabase
+                .from('interaccion')
+                .select('*')
+                .eq('idusuario', user?.idusuario)
+                .order('fecha', { ascending: true });
+
+            if (error) throw error;
+
+            if (data && data.length > 0) {
+                const historyMessages: { text: string; isUser: boolean }[] = [
+                    { text: '¡Hola! Soy el asistente virtual de EduTech. ¿En qué puedo ayudarte hoy?', isUser: false }
+                ];
+
+                data.forEach((interaction: any) => {
+                    historyMessages.push({ text: interaction.mensaje, isUser: true });
+                    if (interaction.respuesta) {
+                        historyMessages.push({ text: interaction.respuesta, isUser: false });
+                    }
+                });
+
+                setMessages(historyMessages);
+            }
+            setHistoryLoaded(true);
+        } catch (error) {
+            console.error('Error loading conversation history:', error);
+            setHistoryLoaded(true);
+        }
+    };
+
+    const saveInteraction = async (userMessage: string, botResponse: string) => {
+        try {
+            await supabase
+                .from('interaccion')
+                .insert({
+                    idusuario: user?.idusuario,
+                    mensaje: userMessage,
+                    respuesta: botResponse,
+                    categoria: null,
+                    fecha: new Date().toISOString()
+                });
+        } catch (error) {
+            console.error('Error saving interaction:', error);
+        }
+    };
 
     const handleSend = async (textToSend?: string) => {
         const messageText = textToSend || input;
-        if (!messageText.trim()) return;
+        if (!messageText.trim() || !user) return;
 
         setMessages(prev => [...prev, { text: messageText, isUser: true }]);
         setInput('');
         setIsLoading(true);
 
         try {
-            const response = await getGeminiResponse(messageText);
+            // Build user context
+            const userContext: UserContext = {
+                user: {
+                    nombre: user.nombre,
+                    apellido: user.apellido,
+                    rol: user.idrol.toString(),
+                    correo: user.correo
+                },
+                children: children.length > 0 ? children : undefined
+            };
+
+            const response = await getGeminiResponseWithContext(messageText, userContext);
             setMessages(prev => [...prev, {
                 text: response,
                 isUser: false
             }]);
+
+            // Save interaction to database
+            await saveInteraction(messageText, response);
         } catch (error) {
+            const errorMessage = "Lo siento, hubo un error al conectar con el asistente.";
             setMessages(prev => [...prev, {
-                text: "Lo siento, hubo un error al conectar con el asistente.",
+                text: errorMessage,
                 isUser: false
             }]);
+
+            // Save error interaction too
+            await saveInteraction(messageText, errorMessage);
         } finally {
             setIsLoading(false);
         }
@@ -39,7 +253,7 @@ const StudentDashboard = () => {
 
     const handleLogout = () => {
         logout();
-        navigate('https://adsotech-edutech.vercel.app/');
+        navigate('/');
     };
 
     return (
@@ -107,27 +321,29 @@ const StudentDashboard = () => {
                             </div>
                         )}
                     </div>
-                </div>
+                </div >
 
                 {/* Shortcuts */}
-                {messages.length === 1 && (
-                    <div className="px-6 py-3 bg-white border-t border-gray-100">
-                        <div className="max-w-4xl mx-auto">
-                            <p className="text-xs text-gray-500 mb-2">Preguntas sugeridas:</p>
-                            <div className="flex flex-wrap gap-2">
-                                {['Horarios', 'Calificaciones', 'Asistencia', 'Próximas actividades', 'Información del colegio'].map((shortcut) => (
-                                    <button
-                                        key={shortcut}
-                                        onClick={() => handleSend(shortcut)}
-                                        className="px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-xl hover:bg-indigo-100 transition-colors"
-                                    >
-                                        {shortcut}
-                                    </button>
-                                ))}
+                {
+                    messages.length === 1 && (
+                        <div className="px-6 py-3 bg-white border-t border-gray-100">
+                            <div className="max-w-4xl mx-auto">
+                                <p className="text-xs text-gray-500 mb-2">Preguntas sugeridas:</p>
+                                <div className="flex flex-wrap gap-2">
+                                    {['Horarios', 'Calificaciones', 'Asistencia', 'Próximas actividades', 'Información del colegio'].map((shortcut) => (
+                                        <button
+                                            key={shortcut}
+                                            onClick={() => handleSend(shortcut)}
+                                            className="px-4 py-2 bg-indigo-50 text-indigo-600 text-sm font-medium rounded-xl hover:bg-indigo-100 transition-colors"
+                                        >
+                                            {shortcut}
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
-                    </div>
-                )}
+                    )
+                }
 
                 {/* Input */}
                 <div className="p-6 bg-white border-t border-gray-200">
@@ -154,8 +370,8 @@ const StudentDashboard = () => {
                         </form>
                     </div>
                 </div>
-            </div>
-        </div>
+            </div >
+        </div >
     );
 };
 
