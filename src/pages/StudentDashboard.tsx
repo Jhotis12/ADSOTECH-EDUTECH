@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Send, Loader2, LogOut, User, Sparkles, ChevronDown } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getGeminiResponseWithContext, type UserContext } from '../lib/gemini';
 import { useAuth } from '../context/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -986,8 +987,6 @@ const StudentDashboard = () => {
                             <div className="relative">
                                 <button
                                     type="button"
-                                    onMouseEnter={() => setShowQuickActions(true)}
-                                    onMouseLeave={() => setShowQuickActions(false)}
                                     onClick={() => setShowQuickActions(!showQuickActions)}
                                     className="p-3 md:p-4 bg-gradient-to-br from-purple-500 to-indigo-600 text-white rounded-xl hover:from-purple-600 hover:to-indigo-700 transition-all shadow-md hover:shadow-lg"
                                 >
@@ -995,39 +994,40 @@ const StudentDashboard = () => {
                                 </button>
 
                                 {/* Quick Actions Menu */}
-                                {showQuickActions && (
-                                    <div
-                                        className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50"
-                                        onMouseEnter={() => setShowQuickActions(true)}
-                                        onMouseLeave={() => setShowQuickActions(false)}
-                                    >
-                                        <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Acciones Rápidas</p>
-                                        {[
-                                            { label: 'Análisis educativo', prompt: 'Dame un análisis completo del rendimiento académico' },
-                                            { label: 'Recursos integrados', prompt: 'Muéstrame los recursos educativos disponibles' },
-                                            { label: 'Generar certificado', prompt: 'Genera un certificado de estudio' },
-                                            { label: 'Ver calificaciones', prompt: 'Muéstrame las calificaciones' },
-                                            { label: 'Ver asistencia', prompt: 'Muéstrame el reporte de asistencia' },
-                                            { label: 'Próximas actividades', prompt: 'Cuáles son las próximas actividades' }
-                                        ].map((action, idx) => (
-                                            <button
-                                                key={idx}
-                                                type="button"
-                                                onClick={() => {
-                                                    if (action.label === 'Análisis educativo') {
-                                                        setShowAnalysisDashboard(true);
-                                                    } else {
-                                                        handleSend(action.prompt);
-                                                    }
-                                                    setShowQuickActions(false);
-                                                }}
-                                                className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 transition-colors text-sm text-gray-700 hover:text-indigo-600"
-                                            >
-                                                {action.label}
-                                            </button>
-                                        ))}
-                                    </div>
-                                )}
+                                <AnimatePresence>
+                                    {showQuickActions && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                                            exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                            transition={{ duration: 0.2, ease: "easeOut" }}
+                                            className="absolute bottom-full left-0 mb-2 w-64 bg-white rounded-xl shadow-xl border border-gray-200 py-2 z-50"
+                                        >
+                                            <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase">Acciones Rápidas</p>
+                                            {[
+                                                { label: 'Análisis educativo', prompt: 'Dame un análisis completo del rendimiento académico' },
+                                                { label: 'Recursos integrados', prompt: 'Muéstrame los recursos educativos disponibles' },
+                                                { label: 'Calendario', prompt: 'Muéstrame mi horario de clases y próximos eventos' }
+                                            ].map((action, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    type="button"
+                                                    onClick={() => {
+                                                        if (action.label === 'Análisis educativo') {
+                                                            setShowAnalysisDashboard(true);
+                                                        } else {
+                                                            handleSend(action.prompt);
+                                                        }
+                                                        setShowQuickActions(false);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2.5 hover:bg-indigo-50 transition-colors text-sm text-gray-700 hover:text-indigo-600"
+                                                >
+                                                    {action.label}
+                                                </button>
+                                            ))}
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
                             </div>
 
                             <input
