@@ -55,73 +55,97 @@ const addFooter = (doc: jsPDF) => {
 export const generateStudyCertificate = (student: Student, institution: Institution) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
+    const pageHeight = doc.internal.pageSize.height;
 
-    // Simplified border
+    // Full page border
     doc.setDrawColor(41, 128, 185);
-    doc.setLineWidth(0.8);
-    doc.rect(15, 15, pageWidth - 30, 100, 'S');
+    doc.setLineWidth(1);
+    doc.rect(15, 15, pageWidth - 30, pageHeight - 30, 'S');
 
-    // Header - more compact
-    doc.setFontSize(14);
+    // Inner decorative border
+    doc.setLineWidth(0.5);
+    doc.rect(18, 18, pageWidth - 36, pageHeight - 36, 'S');
+
+    // Header
+    let currentY = 40;
+    doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(41, 128, 185);
-    doc.text(institution.nombre.toUpperCase(), pageWidth / 2, 22, { align: 'center' });
+    doc.text(institution.nombre.toUpperCase(), pageWidth / 2, currentY, { align: 'center' });
 
-    doc.setFontSize(8);
+    currentY += 10;
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100);
-    doc.text(`${institution.ciudad}, ${institution.departamento}`, pageWidth / 2, 28, { align: 'center' });
+    doc.text(`${institution.ciudad}, ${institution.departamento}`, pageWidth / 2, currentY, { align: 'center' });
+    currentY += 5;
+    doc.text(`NIT: ${institution.telefono} | Email: ${institution.correo}`, pageWidth / 2, currentY, { align: 'center' });
 
-    // Certificate title - reduced size
-    doc.setFontSize(16);
+    // Certificate title
+    currentY += 30;
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('CERTIFICADO DE ESTUDIO', pageWidth / 2, 38, { align: 'center' });
+    doc.text('CERTIFICADO DE ESTUDIO', pageWidth / 2, currentY, { align: 'center' });
 
     // Decorative line
+    currentY += 5;
     doc.setDrawColor(41, 128, 185);
     doc.setLineWidth(0.5);
-    doc.line(50, 42, pageWidth - 50, 42);
+    doc.line(40, currentY, pageWidth - 40, currentY);
 
-    // Certificate number - smaller
-    doc.setFontSize(7);
+    // Certificate number
+    currentY += 15;
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(100);
     const certNumber = `No. ${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-    doc.text(certNumber, pageWidth - 20, 48, { align: 'right' });
+    doc.text(certNumber, pageWidth - 25, currentY, { align: 'right' });
 
-    // Main content - more compact
-    doc.setFontSize(10);
+    // Main content header
+    currentY += 20;
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('LA RECTORÍA HACE CONSTAR:', pageWidth / 2, 58, { align: 'center' });
+    doc.text('LA RECTORÍA HACE CONSTAR:', pageWidth / 2, currentY, { align: 'center' });
 
-    // Student information - simplified
-    doc.setFontSize(10);
+    // Student information
+    currentY += 20;
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'normal');
     const documentInfo = student.tipodocumento && student.documento
-        ? `(${student.tipodocumento} ${student.documento})`
-        : '';
-    const studentText = `Que ${student.nombre.toUpperCase()} ${student.apellido.toUpperCase()} ${documentInfo} se encuentra matriculado(a) y cursando estudios en esta institución para el año lectivo ${new Date().getFullYear()}. Expedido en ${institution.ciudad}, ${new Date().toLocaleDateString('es-CO')}.`;
-    doc.text(studentText, 25, 68, { maxWidth: pageWidth - 50, align: 'justify', lineHeightFactor: 1.4 });
+        ? `identificado(a) con ${student.tipodocumento} No. ${student.documento}`
+        : `identificado(a) con documento ${student.documento || 'N/A'}`;
 
-    // Signature section - more compact
-    const signatureY = 100;
+    const studentText = `Que el(la) estudiante ${student.nombre.toUpperCase()} ${student.apellido.toUpperCase()}, ${documentInfo}, se encuentra debidamente matriculado(a) en el grado ${student.grado || '____'} de esta Institución Educativa, y asiste regularmente a las actividades académicas programadas para el año lectivo ${new Date().getFullYear()}.
+
+Durante su permanencia en la institución, ha observado buena conducta y cumplimiento con sus deberes académicos.
+
+Se expide la presente certificación a solicitud del interesado(a) en ${institution.ciudad}, a los ${new Date().getDate()} días del mes de ${new Date().toLocaleString('es-CO', { month: 'long' })} de ${new Date().getFullYear()}.`;
+
+    doc.text(studentText, 30, currentY, { maxWidth: pageWidth - 60, align: 'justify', lineHeightFactor: 1.8 });
+
+    // Signature section
+    const signatureY = pageHeight - 60;
     doc.setFontSize(14);
     doc.setFont('times', 'italic');
     doc.setTextColor(0, 0, 139);
-    doc.text('Dr. [Nombre Rector]', pageWidth / 2, signatureY, { align: 'center' });
+    doc.text('Dr. [Nombre Rector]', pageWidth / 2, signatureY - 5, { align: 'center' });
 
     doc.setDrawColor(0);
     doc.setLineWidth(0.5);
-    doc.line(pageWidth / 2 - 35, signatureY + 3, pageWidth / 2 + 35, signatureY + 3);
+    doc.line(pageWidth / 2 - 40, signatureY, pageWidth / 2 + 40, signatureY);
 
-    doc.setFontSize(9);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('RECTOR(A)', pageWidth / 2, signatureY + 8, { align: 'center' });
+    doc.text('RECTOR(A)', pageWidth / 2, signatureY + 6, { align: 'center' });
 
-    // Simplified footer
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.text(institution.nombre, pageWidth / 2, signatureY + 12, { align: 'center' });
+
+    // Footer
     addFooter(doc);
     doc.save(`Certificado_Estudio_${student.nombre}_${student.apellido}.pdf`);
 };

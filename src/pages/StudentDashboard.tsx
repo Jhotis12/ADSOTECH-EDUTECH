@@ -411,7 +411,7 @@ const StudentDashboard = () => {
                 // Fetch matricula to get group
                 const { data: matriculaData } = await supabase
                     .from('matricula')
-                    .select('idmatricula, idgrupo')
+                    .select('idmatricula, idgrupo, grupo(nombre)')
                     .eq('idestudiante', childId)
                     .order('anio', { ascending: false })
                     .limit(1)
@@ -498,6 +498,7 @@ const StudentDashboard = () => {
                     correo: user.correo,
                     tipodocumento: user.tipodocumento || '',
                     documento: user.documento || '',
+                    grado: (matriculaData?.grupo as any)?.[0]?.nombre || '',
                     grades,
                     attendance,
                     stats: {
@@ -801,7 +802,7 @@ const StudentDashboard = () => {
             console.log('UserContext resources:', userContext.resources); // Debug log
             console.log('Resources array length:', resources.length); // Debug log
 
-            const response = await getGeminiResponseWithContext(messageText, userContext);
+            const response = await getGeminiResponseWithContext(messageText, userContext, messages);
 
             // Check for action marker
             // Check for action marker

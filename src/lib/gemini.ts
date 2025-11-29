@@ -123,9 +123,133 @@ export const getGeminiResponse = async (prompt: string): Promise<string> => {
     }
 };
 
+// Helper function to detect academic alerts
+const detectAcademicAlerts = (child: any): string[] => {
+    const alerts: string[] = [];
+
+    // Check average
+    if (child.stats && child.stats.promedioGeneral < 3.0) {
+        alerts.push(`⚠️ Promedio general BAJO (${child.stats.promedioGeneral.toFixed(2)})`);
+    }
+
+    // Check attendance
+    if (child.stats && (child.stats.totalInasistencias > 3 || child.stats.porcentajeAsistencia < 80)) {
+        alerts.push(`⚠️ Alerta de ASISTENCIA (${child.stats.totalInasistencias} inasistencias, ${child.stats.porcentajeAsistencia}%)`);
+    }
+
+    // Check overdue tasks
+    if (child.taskStats && child.taskStats.tareasAtrasadas > 0) {
+        alerts.push(`⚠️ ${child.taskStats.tareasAtrasadas} tareas ATRASADAS`);
+    }
+
+    // Check specific low grades
+    if (child.grades) {
+        const lowGrades = child.grades.filter((g: any) => g.nota < 3.0);
+        if (lowGrades.length > 0) {
+            const subjects = [...new Set(lowGrades.map((g: any) => g.asignatura))].join(', ');
+            alerts.push(`⚠️ Notas bajas recientes en: ${subjects}`);
+        }
+    }
+
+    return alerts;
+};
+
+// Helper function to generate sibling comparisons
+const generateSiblingsComparison = (children: any[]): string => {
+    if (!children || children.length < 2) return '';
+
+    let comparison = `\n📊 ANÁLISIS COMPARATIVO ENTRE HERMANOS:\n`;
+
+    // Compare averages
+    const sortedByAverage = [...children].sort((a, b) =>
+        (b.stats?.promedioGeneral || 0) - (a.stats?.promedioGeneral || 0)
+    );
+
+    comparison += `- Promedio General: ${sortedByAverage[0].nombre} lidera con ${sortedByAverage[0].stats?.promedioGeneral.toFixed(2)}`;
+    if (sortedByAverage.length > 1) {
+        const diff = (sortedByAverage[0].stats?.promedioGeneral || 0) - (sortedByAverage[sortedByAverage.length - 1].stats?.promedioGeneral || 0);
+        comparison += ` (diferencia de ${diff.toFixed(2)} vs ${sortedByAverage[sortedByAverage.length - 1].nombre})`;
+    }
+    comparison += '\n';
+
+    // Compare attendance
+    const sortedByAbsences = [...children].sort((a, b) =>
+        (b.stats?.totalInasistencias || 0) - (a.stats?.totalInasistencias || 0)
+    );
+
+    if (sortedByAbsences[0].stats?.totalInasistencias > 0) {
+        comparison += `- Asistencia: ${sortedByAbsences[0].nombre} tiene más inasistencias (${sortedByAbsences[0].stats?.totalInasistencias})`;
+        if (sortedByAbsences[sortedByAbsences.length - 1].stats?.totalInasistencias === 0) {
+            comparison += ` mientras que ${sortedByAbsences[sortedByAbsences.length - 1].nombre} tiene asistencia perfecta`;
+        }
+        comparison += '\n';
+    }
+
+    // Compare tasks
+    const totalOverdue = children.reduce((sum, c) => sum + (c.taskStats?.tareasAtrasadas || 0), 0);
+    if (totalOverdue > 0) {
+        const mostOverdue = [...children].sort((a, b) =>
+            (b.taskStats?.tareasAtrasadas || 0) - (a.taskStats?.tareasAtrasadas || 0)
+        )[0];
+        comparison += `- Tareas: Atención requerida con ${mostOverdue.nombre} (${mostOverdue.taskStats?.tareasAtrasadas} tareas atrasadas)\n`;
+    }
+
+    return comparison;
+};
+
+// Helper function to generate personalized recommendations
+const generatePersonalizedRecommendations = (child: any, resources: any[]): string => {
+    let recommendations = `\n💡 RECOMENDACIONES PERSONALIZADAS:\n`;
+    let hasRecommendations = false;
+
+    // Academic recommendations based on low grades
+    if (child.grades) {
+        const lowSubjects = [...new Set(child.grades
+            .filter((g: any) => g.nota < 3.5)
+            .map((g: any) => g.asignatura)
+        )];
+
+        if (lowSubjects.length > 0) {
+            hasRecommendations = true;
+            recommendations += `- Refuerzo Académico: Se recomienda repasar ${lowSubjects.join(', ')}.\n`;
+
+            // Suggest specific resources
+            if (resources) {
+                const relevantResources = resources.filter((r: any) =>
+                    lowSubjects.some((s: any) =>
+                        r.asignatura.toLowerCase().includes(String(s).toLowerCase()) ||
+                        String(s).toLowerCase().includes(r.asignatura.toLowerCase())
+                    )
+                );
+
+                if (relevantResources.length > 0) {
+                    recommendations += `  📚 Recursos sugeridos disponibles en plataforma:\n`;
+                    relevantResources.slice(0, 3).forEach((r: any) => {
+                        recommendations += `    • "${r.titulo}" (${r.tipo})\n`;
+                    });
+                }
+            }
+        }
+    }
+
+    // Study habits recommendations
+    if (child.taskStats?.tareasAtrasadas > 0) {
+        hasRecommendations = true;
+        recommendations += `- Hábitos de Estudio: Establecer un horario fijo para completar las ${child.taskStats.tareasAtrasadas} tareas pendientes.\n`;
+    }
+
+    if (child.stats?.totalInasistencias > 2) {
+        hasRecommendations = true;
+        recommendations += `- Asistencia: Es crítico mejorar la asistencia para no afectar el rendimiento académico.\n`;
+    }
+
+    return hasRecommendations ? recommendations : '';
+};
+
 export const getGeminiResponseWithContext = async (
     prompt: string,
-    userContext: UserContext
+    userContext: UserContext,
+    conversationHistory?: { text: string; isUser: boolean }[]
 ): Promise<string> => {
     if (!genAI) {
         return "Error: La API Key de Gemini no está configurada. Por favor revisa el archivo .env.";
@@ -169,12 +293,27 @@ Correo: ${userContext.user.correo}
                         : '';
                 contextPrompt += `\n${index + 1}. ${child.nombre} ${child.apellido} (${child.correo})${docInfo}\n`;
 
+                // Add alerts
+                const alerts = detectAcademicAlerts(child);
+                if (alerts.length > 0) {
+                    contextPrompt += `   ⚠️ ALERTAS ACTIVAS:\n`;
+                    alerts.forEach(alert => contextPrompt += `   ${alert}\n`);
+                }
+
                 // Add statistics if available
                 if (child.stats) {
                     contextPrompt += `   Estadísticas Académicas:\n`;
                     contextPrompt += `   - Promedio General: ${child.stats.promedioGeneral.toFixed(2)}\n`;
                     contextPrompt += `   - Asistencia: ${child.stats.porcentajeAsistencia}% (${child.stats.totalInasistencias} inasistencias)\n`;
                     contextPrompt += `   - Total Evaluaciones: ${child.stats.totalEvaluaciones}\n`;
+                }
+
+                // Add recommendations
+                if (userContext.resources) {
+                    const recommendations = generatePersonalizedRecommendations(child, userContext.resources);
+                    if (recommendations) {
+                        contextPrompt += `   ${recommendations.replace(/\n/g, '\n   ')}\n`;
+                    }
                 }
 
                 // Add recent grades if available
@@ -221,6 +360,11 @@ Correo: ${userContext.user.correo}
                     });
                 }
             });
+
+            // Add sibling comparison if applicable
+            if (userContext.children.length > 1 && userContext.user.rol === '5') {
+                contextPrompt += generateSiblingsComparison(userContext.children);
+            }
         }
 
         // Add institution information
@@ -295,12 +439,34 @@ Correo: ${userContext.user.correo}
             contextPrompt += `\nNOTA: No hay recursos educativos externos registrados en el sistema actualmente.\n`;
         }
 
-        contextPrompt += `\nResponde de manera CONCISA y PROFESIONAL. IMPORTANTE:
+        // Add conversation history if available
+        if (conversationHistory && conversationHistory.length > 0) {
+            contextPrompt += `\n\n📝 HISTORIAL DE CONVERSACIÓN RECIENTE:\n`;
+            contextPrompt += `(Últimos mensajes para mantener contexto)\n\n`;
+
+            // Limit to last 10 messages (5 exchanges) to avoid token limits
+            const recentHistory = conversationHistory.slice(-10);
+
+            recentHistory.forEach((msg) => {
+                if (msg.isUser) {
+                    contextPrompt += `Usuario: ${msg.text}\n`;
+                } else {
+                    // Remove action markers from history display
+                    const cleanText = msg.text.replace(/<<<ACTION:[\s\S]*?>>>/g, '').trim();
+                    contextPrompt += `Asistente: ${cleanText}\n`;
+                }
+            });
+
+            contextPrompt += `\nIMPORTANTE: Mantén coherencia con la conversación anterior. Si el usuario hace referencia a algo mencionado antes ("y eso?", "cuál?", "también", etc.), usa el contexto del historial para entender a qué se refiere.\n`;
+        }
+
+        contextPrompt += `\n\nResponde de manera CONCISA y PROFESIONAL. IMPORTANTE:
 - Responde ÚNICAMENTE lo que se te pregunta
 - NO agregues información adicional no solicitada
 - NO des explicaciones extra
 - Sé directo y preciso
 - Usa un tono profesional pero amigable
+- Si el usuario hace una pregunta de seguimiento sin contexto explícito, usa el HISTORIAL para entender a qué se refiere
 
 RECOMENDACIÓN DE RECURSOS EDUCATIVOS:
 Cuando el usuario pregunte sobre:
@@ -356,7 +522,7 @@ SI EL USUARIO PIDE UN CERTIFICADO O REPORTE:
 
 Ejemplo: "Claro, aquí tienes el reporte de Juan del periodo 1. <<<ACTION:{"type":"REPORTE_CALIFICACIONES", "studentName":"Juan Pérez", "period": 1}>>>"
 
-Usuario pregunta: ${prompt}`;
+Usuario pregunta ACTUAL: ${prompt}`;
 
         const modelName = import.meta.env.VITE_GEMINI_MODEL || "gemini-pro";
 
