@@ -55,117 +55,74 @@ const addFooter = (doc: jsPDF) => {
 export const generateStudyCertificate = (student: Student, institution: Institution) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
-    const pageHeight = doc.internal.pageSize.height;
 
-    // Decorative border
-    doc.setDrawColor(41, 128, 185); // Blue color
-    doc.setLineWidth(1.5);
-    doc.rect(10, 10, pageWidth - 20, pageHeight - 20, 'S');
-
-    doc.setLineWidth(0.5);
-    doc.rect(12, 12, pageWidth - 24, pageHeight - 24, 'S');
-
-    // Header with institution name
-    doc.setFontSize(18);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(41, 128, 185);
-    doc.text(institution.nombre.toUpperCase(), pageWidth / 2, 25, { align: 'center' });
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100);
-    doc.text(`${institution.ciudad}, ${institution.departamento}`, pageWidth / 2, 31, { align: 'center' });
-    doc.text(`NIT: ${institution.telefono}`, pageWidth / 2, 36, { align: 'center' });
-
-    // Certificate title
-    doc.setFontSize(24);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0);
-    doc.text('CERTIFICADO DE ESTUDIO', pageWidth / 2, 55, { align: 'center' });
-
-    // Decorative line under title
+    // Simplified border
     doc.setDrawColor(41, 128, 185);
     doc.setLineWidth(0.8);
-    doc.line(40, 58, pageWidth - 40, 58);
+    doc.rect(15, 15, pageWidth - 30, 100, 'S');
 
-    // Certificate number
-    doc.setFontSize(9);
+    // Header - more compact
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(41, 128, 185);
+    doc.text(institution.nombre.toUpperCase(), pageWidth / 2, 22, { align: 'center' });
+
+    doc.setFontSize(8);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100);
+    doc.text(`${institution.ciudad}, ${institution.departamento}`, pageWidth / 2, 28, { align: 'center' });
+
+    // Certificate title - reduced size
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0);
+    doc.text('CERTIFICADO DE ESTUDIO', pageWidth / 2, 38, { align: 'center' });
+
+    // Decorative line
+    doc.setDrawColor(41, 128, 185);
+    doc.setLineWidth(0.5);
+    doc.line(50, 42, pageWidth - 50, 42);
+
+    // Certificate number - smaller
+    doc.setFontSize(7);
     doc.setFont('helvetica', 'italic');
     doc.setTextColor(100);
     const certNumber = `No. ${new Date().getFullYear()}-${Math.floor(Math.random() * 10000).toString().padStart(4, '0')}`;
-    doc.text(certNumber, pageWidth - 20, 65, { align: 'right' });
+    doc.text(certNumber, pageWidth - 20, 48, { align: 'right' });
 
-    // Main content
-    doc.setFontSize(12);
+    // Main content - more compact
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('LA RECTORÍA DE LA INSTITUCIÓN EDUCATIVA', pageWidth / 2, 80, { align: 'center' });
-    doc.text(institution.nombre.toUpperCase(), pageWidth / 2, 88, { align: 'center' });
+    doc.text('LA RECTORÍA HACE CONSTAR:', pageWidth / 2, 58, { align: 'center' });
 
-    doc.setFontSize(14);
-    doc.setFont('helvetica', 'bold');
-    doc.text('HACE CONSTAR:', pageWidth / 2, 105, { align: 'center' });
-
-    // Student information box
-    doc.setFillColor(240, 248, 255); // Light blue background
-    doc.rect(25, 115, pageWidth - 50, 35, 'F');
-    doc.setDrawColor(41, 128, 185);
-    doc.setLineWidth(0.5);
-    doc.rect(25, 115, pageWidth - 50, 35, 'S');
-
-    doc.setFontSize(12);
+    // Student information - simplified
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0);
     const documentInfo = student.tipodocumento && student.documento
-        ? `identificado(a) con ${student.tipodocumento} No. ${student.documento}`
-        : `identificado(a) con documento ${student.documento || 'N/A'}`;
-    const studentText = `Que el(la) estudiante ${student.nombre.toUpperCase()} ${student.apellido.toUpperCase()}, ${documentInfo}, se encuentra debidamente matriculado(a) y cursando estudios en esta institución educativa para el año lectivo ${new Date().getFullYear()}.`;
-    doc.text(studentText, 30, 125, { maxWidth: pageWidth - 60, align: 'justify', lineHeightFactor: 1.6 });
+        ? `(${student.tipodocumento} ${student.documento})`
+        : '';
+    const studentText = `Que ${student.nombre.toUpperCase()} ${student.apellido.toUpperCase()} ${documentInfo} se encuentra matriculado(a) y cursando estudios en esta institución para el año lectivo ${new Date().getFullYear()}. Expedido en ${institution.ciudad}, ${new Date().toLocaleDateString('es-CO')}.`;
+    doc.text(studentText, 25, 68, { maxWidth: pageWidth - 50, align: 'justify', lineHeightFactor: 1.4 });
 
-    // Additional text
-    doc.setFontSize(11);
-    doc.setFont('helvetica', 'normal');
-    const additionalText = `El presente certificado se expide a solicitud del interesado(a) para los fines que estime convenientes, en la ciudad de ${institution.ciudad}, a los ${new Date().getDate()} días del mes de ${new Date().toLocaleString('es-CO', { month: 'long' })} de ${new Date().getFullYear()}.`;
-    doc.text(additionalText, 25, 165, { maxWidth: pageWidth - 50, align: 'justify', lineHeightFactor: 1.5 });
-
-    // Signature section
-    const signatureY = 200;
-
-    // Simulated signature (cursive-style text)
-    doc.setFontSize(20);
+    // Signature section - more compact
+    const signatureY = 100;
+    doc.setFontSize(14);
     doc.setFont('times', 'italic');
-    doc.setTextColor(0, 0, 139); // Dark blue for signature
-    doc.text('Dr. [Nombre Rector]', pageWidth / 2, signatureY - 5, { align: 'center' });
+    doc.setTextColor(0, 0, 139);
+    doc.text('Dr. [Nombre Rector]', pageWidth / 2, signatureY, { align: 'center' });
 
-    // Signature line
     doc.setDrawColor(0);
     doc.setLineWidth(0.5);
-    doc.line(pageWidth / 2 - 45, signatureY, pageWidth / 2 + 45, signatureY);
+    doc.line(pageWidth / 2 - 35, signatureY + 3, pageWidth / 2 + 35, signatureY + 3);
 
-    // Title below signature
-    doc.setFontSize(11);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('RECTOR(A)', pageWidth / 2, signatureY + 6, { align: 'center' });
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.text(institution.nombre, pageWidth / 2, signatureY + 11, { align: 'center' });
+    doc.text('RECTOR(A)', pageWidth / 2, signatureY + 8, { align: 'center' });
 
-    // Official seal placeholder
-    doc.setDrawColor(200);
-    doc.setLineWidth(0.3);
-    doc.circle(pageWidth - 35, signatureY - 10, 15, 'S');
-    doc.setFontSize(7);
-    doc.setTextColor(150);
-    doc.text('SELLO', pageWidth - 35, signatureY - 10, { align: 'center' });
-
-    // Footer
-    doc.setFontSize(8);
-    doc.setTextColor(128);
-    doc.text('Documento generado electrónicamente por EduTech Platform', pageWidth / 2, pageHeight - 15, { align: 'center' });
-    doc.setFontSize(7);
-    doc.text(`Fecha de generación: ${new Date().toLocaleString('es-CO')}`, pageWidth / 2, pageHeight - 11, { align: 'center' });
-
+    // Simplified footer
+    addFooter(doc);
     doc.save(`Certificado_Estudio_${student.nombre}_${student.apellido}.pdf`);
 };
 
@@ -175,30 +132,23 @@ export const generateStudyProof = (student: Student, institution: Institution) =
 
     addHeader(doc, institution);
 
-    doc.setFontSize(18);
+    // Reduced title size
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('CONSTANCIA DE ESTUDIO', pageWidth / 2, 60, { align: 'center' });
+    doc.text('CONSTANCIA DE ESTUDIO', pageWidth / 2, 52, { align: 'center' });
 
-    doc.setFontSize(12);
+    // More concise content
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    const text = `
-    Por medio de la presente se hace constar que:
+    const text = `Se hace constar que ${student.nombre.toUpperCase()} ${student.apellido.toUpperCase()} es estudiante activo de nuestra institución educativa. Se expide en ${institution.ciudad}, el ${new Date().toLocaleDateString('es-CO')}.`;
 
-    ${student.nombre.toUpperCase()} ${student.apellido.toUpperCase()}
+    doc.text(text, 20, 65, { maxWidth: pageWidth - 40, align: 'justify', lineHeightFactor: 1.3 });
 
-    Es estudiante activo de nuestra institución educativa.
-
-    Se expide la presente constancia para los fines que el interesado estime convenientes.
-
-    Dada en ${institution.ciudad}, el ${new Date().toLocaleDateString('es-CO')}.
-    `;
-
-    doc.text(text, 20, 80, { maxWidth: pageWidth - 40, align: 'justify', lineHeightFactor: 1.5 });
-
-    // Signature area
-    doc.line(pageWidth / 2 - 40, 180, pageWidth / 2 + 40, 180);
-    doc.text('SECRETARÍA ACADÉMICA', pageWidth / 2, 185, { align: 'center' });
+    // Compact signature area
+    doc.line(pageWidth / 2 - 35, 95, pageWidth / 2 + 35, 95);
+    doc.setFontSize(9);
+    doc.text('SECRETARÍA ACADÉMICA', pageWidth / 2, 100, { align: 'center' });
 
     addFooter(doc);
     doc.save(`Constancia_Estudio_${student.nombre}_${student.apellido}.pdf`);
@@ -210,116 +160,134 @@ export const generateAttendanceReport = (student: Student, institution: Institut
 
     addHeader(doc, institution);
 
-    doc.setFontSize(18);
+    // Reduced title and info sizes
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('REPORTE DE ASISTENCIA', pageWidth / 2, 60, { align: 'center' });
+    doc.text('REPORTE DE ASISTENCIA', pageWidth / 2, 52, { align: 'center' });
 
-    doc.setFontSize(12);
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Estudiante: ${student.nombre} ${student.apellido}`, 20, 75);
-    doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-CO')}`, 20, 82);
+    doc.text(`Estudiante: ${student.nombre} ${student.apellido} | ${new Date().toLocaleDateString('es-CO')}`, 20, 60);
 
     // Validate attendance array
     if (!attendance || !Array.isArray(attendance) || attendance.length === 0) {
-        doc.setFontSize(10);
-        doc.text('No hay registros de asistencia disponibles.', 20, 100);
+        doc.setFontSize(9);
+        doc.text('No hay registros de asistencia disponibles.', 20, 70);
         addFooter(doc);
         doc.save(`Reporte_Asistencia_${student.nombre}_${student.apellido}.pdf`);
         return;
     }
 
-    const tableData = attendance.map(a => [
+    // Calculate summary first
+    const total = attendance.length;
+    const absences = attendance.filter(a => a.estado === 'Ausente').length;
+    const percentage = total > 0 ? Math.round(((total - absences) / total) * 100) : 0;
+
+    // Show summary before table
+    doc.setFontSize(9);
+    doc.text(`Total: ${total} | Faltas: ${absences} | Asistencia: ${percentage}%`, 20, 67);
+
+    // Limit attendance records to most recent 40 entries to fit in 3 pages
+    const limitedAttendance = attendance.slice(-40);
+    const tableData = limitedAttendance.map(a => [
         new Date(a.fecha).toLocaleDateString('es-CO'),
         a.estado
     ]);
 
     autoTable(doc, {
-        startY: 90,
+        startY: 72,
         head: [['Fecha', 'Estado']],
         body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [63, 81, 181] }, // Indigo color
-        styles: { fontSize: 10 },
+        theme: 'striped',
+        headStyles: { fillColor: [63, 81, 181], fontSize: 9 },
+        styles: { fontSize: 8, cellPadding: 2 },
+        margin: { left: 20, right: 20 },
     });
 
-    // Summary
-    const total = attendance.length;
-    const absences = attendance.filter(a => a.estado === 'Falta').length;
-    const percentage = total > 0 ? Math.round(((total - absences) / total) * 100) : 0;
-
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-
-    doc.text('Resumen:', 20, finalY);
-    doc.text(`Total Clases: ${total}`, 30, finalY + 7);
-    doc.text(`Total Inasistencias: ${absences}`, 30, finalY + 14);
-    doc.text(`Porcentaje de Asistencia: ${percentage}%`, 30, finalY + 21);
+    if (attendance.length > 40) {
+        const finalY = (doc as any).lastAutoTable.finalY + 5;
+        doc.setFontSize(8);
+        doc.setTextColor(128);
+        doc.text(`Mostrando los últimos 40 de ${attendance.length} registros`, 20, finalY);
+    }
 
     addFooter(doc);
     doc.save(`Reporte_Asistencia_${student.nombre}_${student.apellido}.pdf`);
 };
 
-export const generateGradesReport = (student: Student, institution: Institution, grades: any[], period?: number, subject?: string) => {
+export const generateGradesReport = (student: Student, institution: Institution, grades: any[], period?: number) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.width;
 
     addHeader(doc, institution);
 
-    doc.setFontSize(18);
+    // Reduced title size
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0);
-    doc.text('REPORTE DE CALIFICACIONES', pageWidth / 2, 60, { align: 'center' });
+    doc.text('REPORTE DE CALIFICACIONES', pageWidth / 2, 52, { align: 'center' });
 
-    doc.setFontSize(12);
+    // More compact header info
+    doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
-    doc.text(`Estudiante: ${student.nombre} ${student.apellido}`, 20, 75);
-    doc.text(`Fecha de generación: ${new Date().toLocaleDateString('es-CO')}`, 20, 82);
+    const periodText = period ? ` - Periodo ${period}` : '';
+    doc.text(`Estudiante: ${student.nombre} ${student.apellido}${periodText} | ${new Date().toLocaleDateString('es-CO')}`, 20, 60);
 
-    // Filter grades by period and subject if specified
+    // Filter grades ONLY by period (removed subject filter as per user request)
     let filteredGrades = grades;
     if (period) {
         filteredGrades = filteredGrades.filter(g => g.periodo === period);
     }
-    if (subject) {
-        filteredGrades = filteredGrades.filter(g => g.asignatura && g.asignatura.toLowerCase().includes(subject.toLowerCase()));
-    }
 
     // Validate grades array
     if (!filteredGrades || !Array.isArray(filteredGrades) || filteredGrades.length === 0) {
-        doc.setFontSize(10);
-        doc.text('No hay calificaciones registradas.', 20, 100);
+        doc.setFontSize(9);
+        doc.text('No hay calificaciones registradas.', 20, 70);
         addFooter(doc);
         doc.save(`Reporte_Calificaciones_${student.nombre}_${student.apellido}.pdf`);
         return;
     }
 
-    const tableData = filteredGrades.map(g => [
-        g.asignatura,
-        g.nota.toFixed(2),
-        g.tipo,
-        new Date(g.fecha).toLocaleDateString('es-CO')
-    ]);
-
-    autoTable(doc, {
-        startY: 90,
-        head: [['Asignatura', 'Nota', 'Tipo', 'Fecha']],
-        body: tableData,
-        theme: 'grid',
-        headStyles: { fillColor: [63, 81, 181] }, // Indigo color
-        styles: { fontSize: 10 },
-    });
-
-    // Summary
+    // Calculate summary
     const totalGrades = filteredGrades.length;
     const average = totalGrades > 0
         ? filteredGrades.reduce((sum, g) => sum + g.nota, 0) / totalGrades
         : 0;
 
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
+    // Show summary before table
+    doc.text(`Total Evaluaciones: ${totalGrades} | Promedio: ${average.toFixed(2)}`, 20, 67);
 
-    doc.text('Resumen Académico:', 20, finalY);
-    doc.text(`Total Evaluaciones: ${totalGrades}`, 30, finalY + 7);
-    doc.text(`Promedio General: ${average.toFixed(2)}`, 30, finalY + 14);
+    // Group grades by subject and show only latest or average per subject to reduce length
+    const gradesBySubject = new Map<string, any[]>();
+    filteredGrades.forEach(g => {
+        if (!gradesBySubject.has(g.asignatura)) {
+            gradesBySubject.set(g.asignatura, []);
+        }
+        gradesBySubject.get(g.asignatura)!.push(g);
+    });
+
+    const tableData: any[] = [];
+    gradesBySubject.forEach((subjectGrades, asignatura) => {
+        const avg = subjectGrades.reduce((sum, g) => sum + g.nota, 0) / subjectGrades.length;
+        const count = subjectGrades.length;
+        tableData.push([
+            asignatura,
+            avg.toFixed(2),
+            `${count} eval.`,
+            subjectGrades[subjectGrades.length - 1].tipo
+        ]);
+    });
+
+    autoTable(doc, {
+        startY: 72,
+        head: [['Asignatura', 'Promedio', 'Cantidad', 'Último Tipo']],
+        body: tableData,
+        theme: 'striped',
+        headStyles: { fillColor: [63, 81, 181], fontSize: 9 },
+        styles: { fontSize: 8, cellPadding: 2 },
+        margin: { left: 20, right: 20 },
+    });
 
     addFooter(doc);
     doc.save(`Reporte_Calificaciones_${student.nombre}_${student.apellido}.pdf`);
