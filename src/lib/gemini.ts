@@ -48,6 +48,13 @@ export interface UserContext {
         fecha: string;
         dirigidoa: string;
     }>;
+    resources?: Array<{
+        titulo: string;
+        tipo: string;
+        url: string;
+        asignatura: string;
+        grado: string;
+    }>;
     children?: Array<{
         nombre: string;
         apellido: string;
@@ -272,12 +279,64 @@ Correo: ${userContext.user.correo}
             });
         }
 
+        // Add resources
+        if (userContext.resources && userContext.resources.length > 0) {
+            contextPrompt += `\nRecursos Educativos Disponibles (NO SON TAREAS):\n`;
+            contextPrompt += `IMPORTANTE: Estos son MATERIALES DE ESTUDIO externos (videos, PDFs, artículos, sitios web) para que el estudiante aprenda más.\n`;
+            contextPrompt += `NO confundas estos recursos con las tareas asignadas del estudiante.\n\n`;
+            userContext.resources.forEach((resource, index) => {
+                contextPrompt += `${index + 1}. ${resource.titulo}\n`;
+                contextPrompt += `   Tipo: ${resource.tipo}\n`;
+                contextPrompt += `   Asignatura: ${resource.asignatura}\n`;
+                contextPrompt += `   Grado: ${resource.grado}\n`;
+                contextPrompt += `   URL: ${resource.url}\n`;
+            });
+        } else {
+            contextPrompt += `\nNOTA: No hay recursos educativos externos registrados en el sistema actualmente.\n`;
+        }
+
         contextPrompt += `\nResponde de manera CONCISA y PROFESIONAL. IMPORTANTE:
 - Responde ÚNICAMENTE lo que se te pregunta
 - NO agregues información adicional no solicitada
 - NO des explicaciones extra
 - Sé directo y preciso
 - Usa un tono profesional pero amigable
+
+RECOMENDACIÓN DE RECURSOS EDUCATIVOS:
+Cuando el usuario pregunte sobre:
+- "¿Dónde puedo estudiar más sobre [materia]?"
+- "¿Qué recursos hay para [tema]?"
+- "¿Cómo puedo investigar más sobre [asignatura]?"
+- "¿Hay materiales de estudio para [tema]?"
+- O cualquier pregunta similar sobre recursos o materiales de estudio
+
+SI HAY RECURSOS DISPONIBLES en la sección "Recursos Educativos Disponibles":
+1. Filtra los recursos por la asignatura mencionada
+2. Presenta SOLO los recursos de la sección "Recursos Educativos Disponibles" (NO las tareas del estudiante)
+3. Presenta los recursos en formato de lista con:
+   - Título del recurso
+   - Tipo (Video, PDF, Artículo, etc.)
+   - Link directo (URL)
+4. Si no hay recursos específicos para esa materia, menciona los recursos generales disponibles
+
+SI NO HAY RECURSOS DISPONIBLES (dice "No hay recursos educativos externos registrados"):
+- Informa al usuario que actualmente no hay recursos externos registrados en el sistema
+- Sugiere que puede consultar con sus profesores o la biblioteca del colegio
+- NO menciones las tareas asignadas como si fueran recursos de estudio
+
+Ejemplo de respuesta cuando HAY recursos:
+"Aquí tienes recursos disponibles para estudiar matemáticas:
+
+📚 Álgebra Básica
+Tipo: PDF
+Link: https://ejemplo.com/algebra
+
+🎥 Geometría Interactiva  
+Tipo: Video
+Link: https://ejemplo.com/geometria"
+
+Ejemplo de respuesta cuando NO HAY recursos:
+"Actualmente no hay recursos educativos externos registrados en el sistema para matemáticas. Te sugiero consultar con tu profesor Carlos Martinez o visitar la biblioteca del colegio para obtener materiales de estudio adicionales."
 
 SI EL USUARIO PIDE UN CERTIFICADO O REPORTE:
 1. Identifica qué tipo de documento quiere:

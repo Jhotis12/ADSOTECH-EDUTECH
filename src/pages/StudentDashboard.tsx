@@ -69,6 +69,7 @@ const StudentDashboard = () => {
     const [schedules, setSchedules] = useState<any[]>([]);
     const [events, setEvents] = useState<any[]>([]);
     const [announcements, setAnnouncements] = useState<any[]>([]);
+    const [resources, setResources] = useState<any[]>([]);
     const [institutionLoaded, setInstitutionLoaded] = useState(false);
     const [showQuickActions, setShowQuickActions] = useState(false);
     const [showSuggestions, setShowSuggestions] = useState(false);
@@ -78,6 +79,34 @@ const StudentDashboard = () => {
 
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
+    // Function to render message text with clickable links
+    const renderMessageWithLinks = (text: string, isUser: boolean) => {
+        // Regex to detect URLs
+        const urlRegex = /(https?:\/\/[^\s]+)/g;
+        const parts = text.split(urlRegex);
+
+        return parts.map((part, index) => {
+            if (part.match(urlRegex)) {
+                return (
+                    <a
+                        key={index}
+                        href={part}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={`underline break-all font-medium ${isUser
+                            ? 'text-blue-200 hover:text-blue-100'
+                            : 'text-blue-600 hover:text-blue-700'
+                            }`}
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {part}
+                    </a>
+                );
+            }
+            return <span key={index}>{part}</span>;
+        });
     };
 
     useEffect(() => {
@@ -92,6 +121,7 @@ const StudentDashboard = () => {
         if (user && !institutionLoaded) {
             loadInstitutionAndTeachers();
             loadAnnouncements();
+            loadResources();
         }
     }, [user, childrenLoaded, institutionLoaded]);
 
@@ -554,6 +584,32 @@ const StudentDashboard = () => {
         }
     };
 
+    const loadResources = async () => {
+        try {
+            // Get all resources (simplified query without joins)
+            const { data, error } = await supabase
+                .from('recurso')
+                .select('*');
+
+            if (!error && data) {
+                console.log('Resources loaded:', data); // Debug log
+                const formattedResources = data.map((r: any) => ({
+                    titulo: r.titulo,
+                    tipo: r.tipo,
+                    url: r.url,
+                    asignatura: r.idasignatura ? `Asignatura ${r.idasignatura}` : 'General',
+                    grado: r.idgrado ? `Grado ${r.idgrado}` : 'Todos los grados'
+                }));
+                setResources(formattedResources);
+                console.log('Formatted resources:', formattedResources); // Debug log
+            } else if (error) {
+                console.error('Error loading resources:', error);
+            }
+        } catch (error) {
+            console.error('Error loading resources:', error);
+        }
+    };
+
     const loadSchedulesAndEvents = async () => {
         try {
             // Determine which group(s) to fetch schedules for
@@ -736,8 +792,12 @@ const StudentDashboard = () => {
                 schedules: schedules.length > 0 ? schedules : undefined,
                 events: events.length > 0 ? events : undefined,
                 announcements: announcements.length > 0 ? announcements : undefined,
+                resources: resources.length > 0 ? resources : undefined,
                 children: children.length > 0 ? children : undefined
             };
+
+            console.log('UserContext resources:', userContext.resources); // Debug log
+            console.log('Resources array length:', resources.length); // Debug log
 
             const response = await getGeminiResponseWithContext(messageText, userContext);
 
@@ -886,12 +946,12 @@ const StudentDashboard = () => {
                                 className={`flex ${msg.isUser ? 'justify-end' : 'justify-start'}`}
                             >
                                 <div
-                                    className={`max-w-[85%] sm:max-w-[75%] p-3 md:p-4 rounded-2xl text-xs md:text-sm ${msg.isUser
+                                    className={`max-w-[85%] sm:max-w-[75%] p-3 md:p-4 rounded-2xl text-xs md:text-sm whitespace-pre-wrap ${msg.isUser
                                         ? 'bg-indigo-600 text-white rounded-br-none'
                                         : 'bg-white text-gray-700 shadow-sm border border-gray-100 rounded-bl-none'
                                         }`}
                                 >
-                                    {msg.text}
+                                    {renderMessageWithLinks(msg.text, msg.isUser)}
                                 </div>
                             </div>
                         ))}
@@ -1075,6 +1135,7 @@ const StudentDashboard = () => {
                         schedules: schedules.length > 0 ? schedules : undefined,
                         events: events.length > 0 ? events : undefined,
                         announcements: announcements.length > 0 ? announcements : undefined,
+                        resources: resources.length > 0 ? resources : undefined,
                         children: children.length > 0 ? children : undefined
                     }}
                 />
