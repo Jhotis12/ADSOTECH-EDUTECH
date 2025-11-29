@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { generateStudyCertificate, generateStudyProof, generateAttendanceReport, generateGradesReport } from '../lib/pdfGenerator';
 import EducationalAnalysisDashboard from '../components/EducationalAnalysisDashboard';
+import CalendarView from '../components/CalendarView';
 
 
 interface Child {
@@ -75,6 +76,7 @@ const StudentDashboard = () => {
     const [showSuggestions, setShowSuggestions] = useState(false);
     const [isProfileExpanded, setIsProfileExpanded] = useState(false);
     const [showAnalysisDashboard, setShowAnalysisDashboard] = useState(false);
+    const [showCalendar, setShowCalendar] = useState(false);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     const scrollToBottom = () => {
@@ -655,7 +657,7 @@ const StudentDashboard = () => {
                         diasemana,
                         horainicio,
                         horafin,
-                        docenteasignaturagrupo:iddag (
+                        docenteasignaturagrupo:iddag!inner (
                             asignatura:idasignatura (
                                 nombre
                             ),
@@ -1099,6 +1101,8 @@ const StudentDashboard = () => {
                                                     onClick={() => {
                                                         if (action.label === 'Análisis educativo') {
                                                             setShowAnalysisDashboard(true);
+                                                        } else if (action.label === 'Calendario') {
+                                                            setShowCalendar(true);
                                                         } else {
                                                             handleSend(action.prompt);
                                                         }
@@ -1164,6 +1168,14 @@ const StudentDashboard = () => {
                     }}
                 />
             )}
+
+            {/* Calendar Modal */}
+            <CalendarView
+                isOpen={showCalendar}
+                onClose={() => setShowCalendar(false)}
+                events={events}
+                schedules={schedules}
+            />
         </div >
     );
 };
