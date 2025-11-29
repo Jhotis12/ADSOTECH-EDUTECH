@@ -1,5 +1,5 @@
 
-import { Bell, Search, User, LogIn, LogOut } from 'lucide-react';
+import { Bell, User, LogIn, LogOut } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -29,16 +29,9 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
     };
 
     return (
-        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 fixed top-0 right-0 left-0 z-10 px-6 flex items-center justify-between transition-all duration-300">
-            <div className="flex items-center gap-4 w-full max-w-md">
-                <div className="relative w-full">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input
-                        type="text"
-                        placeholder="Buscar..."
-                        className="w-full pl-10 pr-4 py-2 bg-gray-50 border-none rounded-full focus:ring-2 focus:ring-indigo-100 focus:bg-white transition-all outline-none text-sm"
-                    />
-                </div>
+        <header className="h-16 bg-white/80 backdrop-blur-md border-b border-gray-200 fixed top-0 right-0 left-0 z-10 px-4 sm:px-6 flex items-center justify-between transition-all duration-300">
+            <div className="flex items-center">
+                <h1 className="text-lg sm:text-xl font-bold text-indigo-600">EduTech</h1>
             </div>
 
             <div className="flex items-center gap-4">
@@ -72,9 +65,13 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                         </button>
                     </>
                 ) : (
-                    <Link to="/login" className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-colors text-sm font-medium">
-                        <LogIn size={18} />
-                        <span>Iniciar Sesión</span>
+                    <Link
+                        to="/login"
+                        className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg transform hover:scale-105 text-sm sm:text-base font-semibold"
+                    >
+                        <LogIn size={18} className="sm:w-5 sm:h-5" />
+                        <span className="hidden sm:inline">Iniciar Sesión</span>
+                        <span className="sm:hidden">Entrar</span>
                     </Link>
                 )}
             </div>
