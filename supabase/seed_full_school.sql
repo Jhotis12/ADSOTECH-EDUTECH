@@ -243,14 +243,31 @@ BEGIN
                     FOR v_dag_id IN SELECT iddag FROM docenteasignaturagrupo WHERE idgrupo = v_grupo_id LOOP
                         -- Buscar evaluaciones de este DAG
                         FOR v_eval_id IN SELECT idevaluacion FROM evaluacion WHERE iddag = v_dag_id LOOP
+                            -- Generar nota aleatoria: 80% probabilidad de aprobar (3.0-5.0), 20% de reprobar (1.0-2.9)
                             INSERT INTO nota (idevaluacion, idmatricula, nota)
-                            VALUES (v_eval_id, v_matricula_id, (random() * 2 + 3)::numeric(4,2)); -- Notas entre 3.0 y 5.0
+                            VALUES (
+                                v_eval_id, 
+                                v_matricula_id, 
+                                CASE 
+                                    WHEN random() < 0.8 THEN (3.0 + random() * 2.0)::numeric(4,2) -- Aprueba
+                                    ELSE (1.0 + random() * 1.9)::numeric(4,2) -- Reprueba
+                                END
+                            );
                         END LOOP;
                         
                         -- Entregas de tareas
                          FOR v_tarea_id IN SELECT idtarea FROM tarea WHERE iddag = v_dag_id LOOP
                             INSERT INTO entregatarea (idtarea, idmatricula, fechaentrega, estado, nota)
-                            VALUES (v_tarea_id, v_matricula_id, NOW(), 'calificada', (random() * 2 + 3)::numeric(3,1));
+                            VALUES (
+                                v_tarea_id, 
+                                v_matricula_id, 
+                                NOW(), 
+                                'calificada', 
+                                CASE 
+                                    WHEN random() < 0.85 THEN (3.0 + random() * 2.0)::numeric(3,1) -- Aprueba
+                                    ELSE (1.0 + random() * 1.9)::numeric(3,1) -- Reprueba
+                                END
+                            );
                         END LOOP;
                     END LOOP;
 
@@ -270,7 +287,7 @@ BEGIN
                     VALUES (
                         v_inst_id, 
                         5, 
-                        'Padre_' || nombres[1 + (k % array_length(nombres, 1))], 
+                        nombres[1 + (floor(random() * array_length(nombres, 1)))::int], 
                         v_apellido_familia, 
                         'padre_' || curr_grado.idgrado || '_' || j || '_' || k || '@iemodelo.edu.co', 
                         'hash_password', 
@@ -319,7 +336,7 @@ BEGIN
             END LOOP;
             
             -- Actualizar nombre del padre para identificarlo
-            UPDATE usuario SET nombre = 'Padre Multi Hijos' WHERE idusuario = v_padre_multi_id;
+            UPDATE usuario SET nombre = 'Ricardo' WHERE idusuario = v_padre_multi_id;
         END IF;
     END;
 
