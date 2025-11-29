@@ -985,34 +985,58 @@ const StudentDashboard = () => {
                                 <div className="space-y-3">
                                     {(user?.idrol === 4 ? [
                                         {
-                                            title: 'Certificados y Reportes',
-                                            questions: ['Generar mi certificado de estudio', 'Análisis de mi rendimiento']
+                                            title: 'Académico',
+                                            questions: ['¿Cuál es mi promedio general?', 'Ver mis calificaciones', '¿Qué tareas tengo pendientes?']
                                         },
                                         {
-                                            title: 'Notas',
-                                            questions: ['¿Cuál es mi promedio general?', 'Ver mis calificaciones']
+                                            title: 'Asistencia y Horarios',
+                                            questions: ['¿Cuántas inasistencias tengo?', '¿Cuál es mi horario de clases?']
                                         },
                                         {
-                                            title: 'Asistencia',
-                                            questions: ['¿Cuántas inasistencias tengo?']
+                                            title: 'Recursos y Estudio',
+                                            questions: ['¿Qué recursos hay para matemáticas?', '¿Dónde puedo estudiar más sobre física?']
+                                        },
+                                        {
+                                            title: 'Documentos',
+                                            questions: ['Generar mi certificado de estudio', 'Reporte de calificaciones']
+                                        },
+                                        {
+                                            title: 'Información',
+                                            questions: ['¿Qué eventos hay próximamente?', '¿Quién es mi profesor de matemáticas?']
                                         }
                                     ] : user?.idrol === 5 ? [
                                         {
-                                            title: 'Certificados y Reportes',
-                                            questions: ['Generar certificado de estudio', 'Información de los docentes']
-                                        },
-                                        {
-                                            title: 'Notas',
-                                            questions: ['¿Cómo es el rendimiento de mi hijo?', 'Ver calificaciones del estudiante']
+                                            title: 'Rendimiento Académico',
+                                            questions: ['¿Cómo es el rendimiento de mi hijo?', 'Ver calificaciones del estudiante', '¿Qué tareas tiene pendientes?']
                                         },
                                         {
                                             title: 'Asistencia',
-                                            questions: ['Reporte de asistencia']
+                                            questions: ['Reporte de asistencia', '¿Cuántas inasistencias tiene?']
+                                        },
+                                        {
+                                            title: 'Recursos Educativos',
+                                            questions: ['¿Qué recursos hay disponibles?', 'Materiales de estudio para biología']
+                                        },
+                                        {
+                                            title: 'Documentos',
+                                            questions: ['Generar certificado de estudio', 'Constancia de estudio']
+                                        },
+                                        {
+                                            title: 'Información',
+                                            questions: ['Información de los docentes', '¿Qué eventos hay próximamente?', 'Horario de clases']
                                         }
                                     ] : [
                                         {
-                                            title: 'General',
-                                            questions: ['Información del colegio', 'Horarios de atención', 'Eventos próximos', 'Trámites disponibles']
+                                            title: 'Información Institucional',
+                                            questions: ['Información del colegio', 'Horarios de atención', 'Ubicación y contacto']
+                                        },
+                                        {
+                                            title: 'Eventos y Comunicados',
+                                            questions: ['Eventos próximos', '¿Hay comunicados nuevos?']
+                                        },
+                                        {
+                                            title: 'Recursos',
+                                            questions: ['¿Qué recursos educativos hay?', 'Trámites disponibles']
                                         }
                                     ]).map((section, idx) => (
                                         <div key={idx}>
