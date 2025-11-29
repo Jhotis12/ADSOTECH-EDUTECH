@@ -22,8 +22,11 @@ const MainLayout = () => {
         return <Navigate to="/dashboard" replace />;
     }
 
-    // Redirect unauthenticated users to login for protected routes (not landing page)
-    if (!isAuthenticated && location.pathname !== '/') {
+    // Public routes that don't require authentication
+    const publicRoutes = ['/', '/terms', '/privacy', '/cookies', '/legal'];
+
+    // Redirect unauthenticated users to login for protected routes
+    if (!isAuthenticated && !publicRoutes.includes(location.pathname)) {
         return <Navigate to="/login" replace />;
     }
 
@@ -35,7 +38,7 @@ const MainLayout = () => {
                     <Outlet />
                 </div>
             </main>
-            {location.pathname === '/' && <Footer />}
+            {(location.pathname === '/' || publicRoutes.includes(location.pathname)) && <Footer />}
             <ChatBot />
         </div>
     );
