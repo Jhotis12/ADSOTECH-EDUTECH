@@ -1,133 +1,133 @@
 # ADSOTECH-EDUTECH
 
-An educational technology platform built with React, TypeScript, and Vite. This platform provides tools for educational institutions to manage schedules, analyze educational data, and provide AI-assisted learning support.
+Plataforma de tecnología educativa construida con React, TypeScript y Vite. Esta plataforma brinda herramientas para que las instituciones educativas gestionen horarios, analicen datos educativos y ofrezcan apoyo al aprendizaje asistido por IA.
 
-## Features
+## Características
 
-- **User Authentication** - Secure login system with role-based access (students, rectors/admins)
-- **Dashboard Views** - Customized dashboards for different user types:
-  - Student Dashboard: Personal schedule, progress tracking
-  - Rector/Admin Dashboard: Institutional overview, analytics
-  - Educational Analysis Dashboard: Data-driven insights
-- **AI Integration** - Powered by Google's Gemini AI for:
-  - Educational analysis and recommendations
-  - Intelligent chatbot assistance
-- **Calendar & Scheduling** - Interactive calendar for managing academic schedules
-- **Document Generation** - PDF creation for reports and certificates
-- **Responsive Design** - Built with TailwindCSS for mobile-friendly interface
-- **Data Visualization** - Charts and graphs using Recharts for educational metrics
+- **Autenticación de Usuario** - Sistema de inicio de sesión seguro con control de acceso basado en roles (estudiantes, rectores/administradores)
+- **Vistas de Panel** - Paneles personalizados para diferentes tipos de usuarios:
+  - Panel de Estudiante: Horario personal, seguimiento de progreso
+  - Panel de Rector/Administrador: Vista institucional, analíticas
+  - Panel de Análisis Educativo: Información basada en datos
+- **Integración de IA** - Impulsado por la IA Gemini de Google para:
+  - Análisis educativo y recomendaciones
+  - Asistencia inteligente mediante chatbot
+- **Calendario y Programación** - Calendario interactivo para gestionar horarios académicos
+- **Generación de Documentos** - Creación de PDF para reportes y certificados
+- **Diseño Responsivo** - Construido con TailwindCSS para interfaz amigable en móviles
+- **Visualización de Datos** - Gráficos y tablas usando Recharts para métricas educativas
 
-## Tech Stack
+## Pila Tecnológica
 
 - **Frontend**: React 19, TypeScript, Vite
-- **Styling**: TailwindCSS 4
-- **State Management**: React Context API
-- **Backend**: Supabase (authentication, database)
-- **AI**: Google Gemini API
-- **UI Components**: 
+- **Estilos**: TailwindCSS 4
+- **Gestión de Estado**: React Context API
+- **Backend**: Supabase (autenticación, base de datos)
+- **IA**: API de Google Gemini
+- **Componentes de UI**: 
   - React Big Calendar
-  - Framer Motion (animations)
-  - Lucide React (icons)
-- **Utilities**:
-  - JSPDF + AutoTable (PDF generation)
-  - Date-fns (date manipulation)
-  - Recharts (data visualization)
+  - Framer Motion (animaciones)
+  - Lucide React (iconos)
+- **Utilidades**:
+  - JSPDF + AutoTable (generación de PDF)
+  - Date-fns (manipulación de fechas)
+  - Recharts (visualización de datos)
 
-## Project Structure
+## Estructura del Proyecto
 
 ```
 src/
-├── components/      # Reusable UI components
+├── components/      # Componentes UI reutilizables
 │   ├── CalendarView.tsx
 │   ├── ChatBot.tsx
 │   ├── EducationalAnalysisDashboard.tsx
 │   ├── Header.tsx
 │   ├── Footer.tsx
 │   └── Sidebar.tsx
-├── pages/           # Page components
+├── pages/           # Componentes de página
 │   ├── Login.tsx
 │   ├── StudentDashboard.tsx
 │   ├── RectorDashboard.tsx
 │   ├── Analysis.tsx
-│   └── ... (policy pages)
-├── context/         # React contexts
+│   └── ... (páginas de políticas)
+├── context/         # Contextos de React
 │   └── AuthContext.tsx
-├── lib/             # External service integrations
-│   ├── supabase.ts  # Supabase client
-│   ├── gemini.ts    # Gemini AI integration
-│   └── pdfGenerator.ts # PDF generation utilities
-├── types/           # TypeScript type definitions
-└── utils/           # Utility functions
+├── lib/             # Integraciones con servicios externos
+│   ├── supabase.ts  # Cliente de Supabase
+│   ├── gemini.ts    # Integración de IA Gemini
+│   └── pdfGenerator.ts # Utilidades de generación de PDF
+├── types/           # Definiciones de tipos TypeScript
+└── utils/           # Funciones de utilidad
     └── fixSchedule.ts
 ```
 
-## Getting Started
+## Cómo Empezar
 
-1. Clone the repository
-2. Install dependencies:
+1. Clone el repositorio
+2. Instale las dependencias:
    ```bash
    npm install
    ```
-3. Set up environment variables in `.env`:
+3. Configure las variables de entorno en `.env`:
    ```
-   VITE_SUPABASE_URL=your_supabase_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-   VITE_GEMINI_API_KEY=your_gemini_api_key
+   VITE_SUPABASE_URL=tu_url_de_supabase
+   VITE_SUPABASE_ANON_KEY=tu_anon_key_de_supabase
+   VITE_GEMINI_API_KEY=tu_api_key_de_gemini
    ```
-4. Start the development server:
+4. Inicie el servidor de desarrollo:
    ```bash
    npm run dev
    ```
 
-## Available Scripts
+## Scripts Disponibles
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run lint` - Run ESLint
-- `npm run preview` - Preview production build
+- `npm run dev` - Iniciar servidor de desarrollo
+- `npm run build` - Construir para producción
+- `npm run lint` - Ejecutar ESLint
+- `npm run preview` - Vista previa de la construcción de producción
 
-## Environment Variables
+## Variables de Entorno
 
-The following environment variables are required:
+Las siguientes variables de entorno son requeridas:
 
-- `VITE_SUPABASE_URL` - Supabase project URL
-- `VITE_SUPABASE_ANON_KEY` - Supabase anonymous key
-- `VITE_GEMINI_API_KEY` - Google Gemini API key
+- `VITE_SUPABASE_URL` - URL del proyecto de Supabase
+- `VITE_SUPABASE_ANON_KEY` - Clave anónima de Supabase
+- `VITE_GEMINI_API_KEY` - Clave de API de Google Gemini
 
-## Features in Detail
+## Características en Detalle
 
-### Authentication
-- Secure user authentication via Supabase
-- Role-based access control (Student, Rector/Admin)
-- Protected routes based on user roles
+### Autenticación
+- Autenticación de usuario segura mediante Supabase
+- Control de acceso basado en roles (Estudiante, Rector/Admin)
+- Rutas protegidas basadas en roles de usuario
 
-### AI Features
-- Educational analysis dashboard with AI-generated insights
-- Conversational chatbot for student assistance
-- Automated report generation and recommendations
+### Características de IA
+- Panel de análisis educativo con insights generados por IA
+- Chatbot conversacional para asistencia estudiantil
+- Generación automática de reportes y recomendaciones
 
-### Calendar System
-- Interactive academic calendar
-- Event creation and management
-- Schedule visualization for students and staff
+### Sistema de Calendario
+- Calendario académico interactivo
+- Creación y gestión de eventos
+- Visualización de horarios para estudiantes y personal
 
-### Data Analytics
-- Visualization of educational metrics
-- Performance tracking over time
-- Comparative analysis tools
+### Análisis de Datos
+- Visualización de métricas educativas
+- Seguimiento de rendimiento a lo largo del tiempo
+- Herramientas de análisis comparativo
 
-## Contributing
+## Contribuir
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+1. Haga un fork del repositorio
+2. Cree su rama de característica (`git checkout -b feature/CaracteristicaAsombrosa`)
+3. Confirme sus cambios (`git commit -m 'Agregar alguna CaracteristicaAsombrosa'`)
+4. Empuje a la rama (`git push origin feature/CaracteristicaAsombrosa`)
+5. Abra una Pull Request
 
-## License
+## Licencia
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+Este proyecto está licenciado bajo la Licencia MIT - vea el archivo LICENSE para más detalles.
 
-## Contact
+## Contacto
 
-For inquiries, please reach out to the development team.
+Para consultas, por favor contacte al equipo de desarrollo.
